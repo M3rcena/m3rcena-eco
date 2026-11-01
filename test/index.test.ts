@@ -750,3 +750,153 @@ describe("EcoManager Canvas Debit Card & Chart Renderers", () => {
   });
 });
 
+describe("EcoManager Real Economy: Bank Vaults & Compound Interest", () => {
+  let eco: EcoManager;
+
+  before(() => {
+    eco = new EcoManager({ defaultWalletBalance: 500000 });
+  });
+
+  test("inspects initial tier 1 vault", async () => {
+    const vault = await eco.getUserVault("vault_user");
+    assert.equal(vault.currentTier.tier, 1);
+    assert.equal(vault.currentTier.capacity, 10000);
+    assert.ok(vault.nextTier);
+    assert.equal(vault.nextTier.tier, 2);
+  });
+
+  test("upgrades bank vault and increases storage capacity", async () => {
+    const res = await eco.upgradeVault("vault_user");
+    assert.equal(res.success, true);
+    assert.equal(res.newTier.tier, 2);
+    assert.equal(res.newCapacity, 50000);
+
+    const updated = await eco.getUserVault("vault_user");
+    assert.equal(updated.currentTier.tier, 2);
+    assert.equal(updated.capacity, 50000);
+  });
+});
+
+describe("EcoManager Real Economy: Credit Score, Loans & Debt", () => {
+  let eco: EcoManager;
+
+  before(() => {
+    eco = new EcoManager({ defaultWalletBalance: 10000 });
+  });
+
+  test("initializes default FICO credit score at 650 (FAIR)", async () => {
+    const credit = await eco.getCreditScore("borrower_1");
+    assert.equal(credit.score, 650);
+    assert.equal(credit.rating, "FAIR");
+    assert.equal(credit.loansRepaid, 0);
+  });
+
+  test("approves eligible starter loan and disburses principal to wallet", async () => {
+    const balBefore = (await eco.getBalance("borrower_1")).wallet;
+    const res = await eco.applyLoan("borrower_1", "starter");
+    assert.equal(res.success, true);
+    assert.ok(res.loan);
+    assert.equal(res.loan.principal, 10000);
+
+    const balAfter = (await eco.getBalance("borrower_1")).wallet;
+    assert.equal(balAfter, balBefore + 10000);
+
+    const loans = await eco.getUserLoans("borrower_1");
+    assert.equal(loans.length, 1);
+    assert.equal(loans[0].status, "active");
+  });
+
+  test("repays loan, settles debt, and boosts credit score", async () => {
+    const loans = await eco.getUserLoans("borrower_1");
+    const activeLoan = loans[0];
+
+    const repayRes = await eco.repayLoan("borrower_1", activeLoan.id, "all");
+    assert.equal(repayRes.success, true);
+    assert.equal(repayRes.isFullyPaid, true);
+    assert.ok(repayRes.newCreditScore > 650);
+
+    const credit = await eco.getCreditScore("borrower_1");
+    assert.ok(credit.score > 650);
+    assert.equal(credit.loansRepaid, 1);
+  });
+});
+
+describe("EcoManager Real Economy: Municipal Bills, Taxes & Audits", () => {
+  let eco: EcoManager;
+
+  before(() => {
+    eco = new EcoManager({ defaultWalletBalance: 200000 });
+  });
+
+  test("generates utility bills and wealth taxes", async () => {
+    const res = await eco.generateBillsIfDue("citizen_1");
+    assert.equal(res.generated, true);
+    assert.ok(res.newBills.length > 0);
+    assert.ok(res.totalBilled > 0);
+
+    const pending = await eco.getPendingBills("citizen_1");
+    assert.ok(pending.length > 0);
+  });
+
+  test("settles all municipal bills and grants Good Citizen bonus", async () => {
+    const res = await eco.payAllBills("citizen_1");
+    assert.equal(res.success, true);
+    assert.ok(res.paidCount > 0);
+
+    const pendingAfter = await eco.getPendingBills("citizen_1");
+    assert.equal(pendingAfter.length, 0);
+  });
+});
+
+describe("EcoManager Bridge Package Router REST Gateway", () => {
+  let eco: EcoManager;
+
+  before(() => {
+    eco = new EcoManager({ defaultWalletBalance: 50000 });
+  });
+
+  test("handles GET /account/:userId via router", async () => {
+    const res = await eco.router!.handleRequest({
+      method: "GET",
+      url: "/api/eco/account/router_user",
+      path: "/api/eco/account/router_user",
+      subPath: "/account/router_user",
+      params: {},
+      query: {},
+      headers: {},
+    });
+
+    assert.ok(res);
+    assert.equal(res.status, 200);
+    assert.equal(res.body.userId, "router_user");
+    assert.equal(res.body.wallet, 50000);
+    assert.ok(res.body.creditScore);
+    assert.ok(res.body.vault);
+  });
+
+  test("handles GET /cards/debit/:userId and renders customized canvas image", async () => {
+    const res = await eco.router!.handleRequest({
+      method: "GET",
+      url: "/api/eco/cards/debit/router_user?bankName=CYBER%20CREDIT%20UNION",
+      path: "/api/eco/cards/debit/router_user",
+      subPath: "/cards/debit/router_user",
+      params: {},
+      query: { bankName: "CYBER CREDIT UNION" },
+      headers: {},
+    });
+
+    assert.ok(res);
+    assert.equal(res.status, 200);
+    assert.equal(res.contentType, "image/png");
+    assert.ok(res.isBuffer);
+    assert.ok(Buffer.isBuffer(res.body));
+    assert.ok(res.body.length > 5000);
+  });
+
+  after(() => {
+    process.exit(0);
+  });
+});
+
+
+

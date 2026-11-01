@@ -19,6 +19,10 @@ export interface BankCardRenderOptions {
   cardNumber?: string;
   cardTier?: "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "OBSIDIAN" | "MYTHIC";
   joinDate?: string;
+  creditScore?: number;
+  vaultTierName?: string;
+  customGradient?: [string, string, string];
+  bankName?: string;
 }
 
 export class RenderBankCard {
@@ -50,9 +54,13 @@ export class RenderBankCard {
     ctx.closePath();
     ctx.clip();
 
-    // 2. Base gradient based on Tier
+    // 2. Base gradient based on Tier or Custom Gradient
     const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-    if (tier === "MYTHIC") {
+    if (options.customGradient && options.customGradient.length === 3) {
+      bgGrad.addColorStop(0, options.customGradient[0]);
+      bgGrad.addColorStop(0.5, options.customGradient[1]);
+      bgGrad.addColorStop(1, options.customGradient[2]);
+    } else if (tier === "MYTHIC") {
       bgGrad.addColorStop(0, "#0f051d");
       bgGrad.addColorStop(0.5, "#2a0845");
       bgGrad.addColorStop(1, "#6441a5");
@@ -94,13 +102,15 @@ export class RenderBankCard {
     ctx.restore();
 
     // 3. Bank Logo / Brand header
+    const brandName = options.bankName || "M3RCENA RESERVE";
     ctx.fillStyle = "#ffffff";
     ctx.font = "800 28px sans-serif";
-    ctx.fillText("M3RCENA RESERVE", 50, 65);
+    ctx.fillText(brandName, 50, 65);
 
+    const subtitle = options.vaultTierName ? `VAULT: ${options.vaultTierName.toUpperCase()}` : "PRIVATE WEALTH & VAULT";
     ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
     ctx.font = "600 16px sans-serif";
-    ctx.fillText("PRIVATE WEALTH & VAULT", 50, 92);
+    ctx.fillText(subtitle, 50, 92);
 
     // Contactless pay symbol
     this.drawContactless(ctx, width - 80, 65);
@@ -144,10 +154,11 @@ export class RenderBankCard {
     ctx.font = "600 16px sans-serif";
     ctx.fillText(`+ ${symbol} ${options.bank.toLocaleString()} in bank`, 360, 380);
 
-    // 7. Cardholder Name & Avatar
+    // 7. Cardholder Name, Credit Score & Avatar
     ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
     ctx.font = "700 13px sans-serif";
-    ctx.fillText("CARDHOLDER", 50, 425);
+    const creditStr = options.creditScore ? ` • FICO CREDIT: ${options.creditScore}` : "";
+    ctx.fillText(`CARDHOLDER${creditStr}`, 50, 425);
 
     ctx.fillStyle = "#ffffff";
     ctx.font = "800 24px sans-serif";

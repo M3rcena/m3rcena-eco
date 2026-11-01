@@ -68,6 +68,9 @@ export abstract class EcoBaseUI<TOptions extends EcoBaseUIOptions = EcoBaseUIOpt
         }
       }
     }, duration);
+    if (typeof (this.timeoutTimer as any).unref === "function") {
+      (this.timeoutTimer as any).unref();
+    }
   }
 
   protected clearTimer(): void {

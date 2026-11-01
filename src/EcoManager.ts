@@ -17,6 +17,10 @@ import { StockMarketManager } from "./modules/StockMarketManager.js";
 import { HeistManager } from "./modules/HeistManager.js";
 import { PetManager } from "./modules/PetManager.js";
 import { CrateManager } from "./modules/CrateManager.js";
+import { VaultManager } from "./modules/VaultManager.js";
+import { LoanManager } from "./modules/LoanManager.js";
+import { TaxManager } from "./modules/TaxManager.js";
+import { EcoBridgeRouter } from "./bridge/EcoBridgeRouter.js";
 import { EcoStorageAdapter, MemoryEcoStorage, JsonEcoStorage } from "./storage/EcoStorage.js";
 import {
   EcoManagerOptions,
@@ -41,6 +45,12 @@ import {
   CrateReward,
   EcoCustomMessages,
   EcoCustomEmojis,
+  BankVaultTier,
+  CreditScoreData,
+  LoanTier,
+  LoanOffer,
+  UserLoan,
+  MunicipalBill,
 } from "./types.js";
 
 export class EcoManager {
@@ -56,6 +66,10 @@ export class EcoManager {
   public heist: HeistManager;
   public pets: PetManager;
   public crates: CrateManager;
+  public vault: VaultManager;
+  public loans: LoanManager;
+  public taxes: TaxManager;
+  public router?: EcoBridgeRouter;
 
   public currencySymbol: string;
   public currencyName: string;
@@ -111,7 +125,19 @@ export class EcoManager {
     // 12. Mystery Loot Crates
     this.crates = new CrateManager(this.bank);
 
-    // 13. Bridge integration
+    // 13. Bank Vault Tiers & Compound Interest
+    this.vault = new VaultManager(this.bank);
+
+    // 14. Credit Score, Loans & Debt
+    this.loans = new LoanManager(this.bank);
+
+    // 15. Municipal Bills & Progressive Wealth Taxes
+    this.taxes = new TaxManager(this.bank);
+
+    // 16. Dynamic Package Router for Bridge Gateway
+    this.router = new EcoBridgeRouter(this);
+
+    // 17. Bridge integration
     if (options.bridge) {
       this.setBridge(options.bridge);
     }
@@ -125,6 +151,10 @@ export class EcoManager {
 
     if (this.bridge && typeof this.bridge.registerModule === "function") {
       this.bridge.registerModule("economy");
+    }
+
+    if (this.bridge && typeof this.bridge.mountPackage === "function" && this.router) {
+      this.bridge.mountPackage(this.router);
     }
   }
 
@@ -606,5 +636,103 @@ export class EcoManager {
     const reward = await this.crates.openCrate(userId, tier, guildId);
     this.dispatchBridgeAction("crate:opened", { userId, tier, reward }, userId, { sound: "win" });
     return reward;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* REAL ECONOMY: BANK VAULT TIERS & COMPOUND INTEREST                         */
+  /* -------------------------------------------------------------------------- */
+
+  public async getUserVault(userId: string, guildId?: string) {
+    return this.vault.getUserVault(userId, guildId);
+  }
+
+  public async upgradeVault(userId: string, guildId?: string) {
+    const res = await this.vault.upgradeVault(userId, guildId);
+    if (res.success) {
+      this.dispatchBridgeAction("vault:upgraded", res, userId, { sound: "purchase" });
+    }
+    return res;
+  }
+
+  public async claimDailyInterest(userId: string, guildId?: string) {
+    const res = await this.vault.claimDailyInterest(userId, guildId);
+    if (res.success) {
+      this.dispatchBridgeAction("vault:interest_claimed", res, userId, { sound: "coin_drop" });
+    }
+    return res;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* REAL ECONOMY: CREDIT SCORE, LOANS & DEBT REPAYMENT                         */
+  /* -------------------------------------------------------------------------- */
+
+  public async getCreditScore(userId: string, guildId?: string): Promise<CreditScoreData> {
+    return this.loans.getCreditScore(userId, guildId);
+  }
+
+  public async getUserLoans(userId: string, guildId?: string): Promise<UserLoan[]> {
+    return this.loans.getUserLoans(userId, guildId);
+  }
+
+  public async applyLoan(userId: string, tier: LoanTier, guildId?: string) {
+    const res = await this.loans.applyLoan(userId, tier, guildId);
+    if (res.success) {
+      this.dispatchBridgeAction("loan:approved", res, userId, { sound: "coin_drop" });
+    }
+    return res;
+  }
+
+  public async repayLoan(userId: string, loanId: string, amount: number | "all", guildId?: string) {
+    const res = await this.loans.repayLoan(userId, loanId, amount, guildId);
+    if (res.success) {
+      this.dispatchBridgeAction("loan:repaid", res, userId, res.isFullyPaid ? { sound: "win" } : undefined);
+    }
+    return res;
+  }
+
+  public async processLoanCollections(userId: string, guildId?: string) {
+    const res = await this.loans.processCollections(userId, guildId);
+    if (res.defaultedLoans.length > 0) {
+      this.dispatchBridgeAction("loan:defaulted", res, userId, { sound: "rob_siren" });
+    }
+    return res;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* REAL ECONOMY: MUNICIPAL BILLS & PROGRESSIVE WEALTH TAXES                   */
+  /* -------------------------------------------------------------------------- */
+
+  public async getPendingBills(userId: string, guildId?: string): Promise<MunicipalBill[]> {
+    return this.taxes.getPendingBills(userId, guildId);
+  }
+
+  public async getAllBills(userId: string, guildId?: string): Promise<MunicipalBill[]> {
+    return this.taxes.getAllBills(userId, guildId);
+  }
+
+  public async generateBillsIfDue(userId: string, guildId?: string) {
+    return this.taxes.generateBillsIfDue(userId, guildId);
+  }
+
+  public async payBill(userId: string, billId: string, guildId?: string) {
+    const res = await this.taxes.payBill(userId, billId, guildId);
+    if (res.success) {
+      this.dispatchBridgeAction("bill:paid", res, userId, { sound: "coin_drop" });
+    }
+    return res;
+  }
+
+  public async payAllBills(userId: string, guildId?: string) {
+    const res = await this.taxes.payAllBills(userId, guildId);
+    if (res.success) {
+      this.dispatchBridgeAction("bills:all_paid", res, userId, { sound: "win" });
+    }
+    return res;
+  }
+
+  public async attemptTaxEvasion(userId: string, guildId?: string) {
+    const res = await this.taxes.attemptTaxEvasion(userId, guildId);
+    this.dispatchBridgeAction("tax:evasion_attempt", res, userId, res.success ? { sound: "win" } : { sound: "rob_siren" });
+    return res;
   }
 }

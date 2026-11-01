@@ -265,6 +265,67 @@ export interface CrateReward {
 }
 
 // ----------------------------------------------------------------------------
+// Real Economy: Bank Vault Tiers, Credit Score, Loans & Municipal Taxes
+// ----------------------------------------------------------------------------
+export interface BankVaultTier {
+  tier: number; // 1 to 6
+  name: string;
+  capacity: number;
+  upgradeCost: number;
+  interestRate: number; // e.g. 0.01 for 1% daily interest
+  robberyDefense: number; // 0 to 1 defense chance
+  perks: string[];
+}
+
+export type CreditRating = "POOR" | "FAIR" | "GOOD" | "VERY_GOOD" | "EXCELLENT";
+
+export interface CreditScoreData {
+  score: number; // 300 to 850 (default 650)
+  rating: CreditRating;
+  loansRepaid: number;
+  defaultsCount: number;
+  taxesPaid: number;
+  lastScoreUpdate?: number;
+}
+
+export type LoanTier = "starter" | "business" | "commercial" | "whale";
+
+export interface LoanOffer {
+  tier: LoanTier;
+  name: string;
+  principal: number;
+  interestRate: number;
+  totalDue: number;
+  minCreditScore: number;
+  durationHours: number;
+  description: string;
+}
+
+export interface UserLoan {
+  id: string;
+  tier: LoanTier;
+  name: string;
+  principal: number;
+  totalDue: number;
+  remainingDue: number;
+  takenAt: number;
+  dueAt: number;
+  status: "active" | "paid" | "defaulted";
+}
+
+export type BillType = "utility" | "rent" | "vault_maintenance" | "syndicate_tribute" | "wealth_tax";
+
+export interface MunicipalBill {
+  id: string;
+  type: BillType;
+  title: string;
+  amount: number;
+  issuedAt: number;
+  dueAt: number;
+  isPaid: boolean;
+}
+
+// ----------------------------------------------------------------------------
 // User Account Model
 // ----------------------------------------------------------------------------
 export interface UserAccount {
@@ -294,6 +355,11 @@ export interface UserAccount {
   pets?: UserPet[];
   skills?: SkillTree;
   prestige?: Prestige;
+  bankTier?: number;
+  creditScore?: CreditScoreData;
+  loans?: UserLoan[];
+  bills?: MunicipalBill[];
+  lastInterestClaimedAt?: number;
   stats: UserStats;
   createdAt: number;
   updatedAt: number;
