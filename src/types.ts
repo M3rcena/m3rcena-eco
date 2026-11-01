@@ -497,3 +497,31 @@ export type EcoDatabaseConfig =
   | {
       type: "memory";
     };
+
+/**
+ * Strongly-typed events emitted by EcoManager.
+ */
+export interface EcoEvents {
+  walletAdd: [event: { userId: string; amount: number; newWallet: number; guildId?: string }];
+  walletRemove: [event: { userId: string; amount: number; newWallet: number; guildId?: string }];
+  deposit: [event: { userId: string; deposited: number; wallet: number; bank: number; guildId?: string }];
+  withdraw: [event: { userId: string; withdrawn: number; wallet: number; bank: number; guildId?: string }];
+  transfer: [event: TransferResult & { guildId?: string }];
+  dailyClaim: [event: { userId: string; amount: number; streak: number; isMilestone: boolean; guildId?: string }];
+  work: [event: { userId: string; earned: number; xp: number; job?: CareerJob; promoted: boolean; guildId?: string }];
+  crime: [event: { userId: string; success: boolean; earned?: number; fine?: number; crimeType?: string; guildId?: string }];
+  robbery: [event: RobResult & { guildId?: string }];
+  gamble: [event: CasinoBetResult & { userId: string; game: string; betAmount: number; guildId?: string }];
+  heist: [result: HeistResult & { targetId?: string; guildId?: string }];
+  shopPurchase: [event: { userId: string; item: ShopItem; quantity: number; totalCost: number; newWallet: number; guildId?: string }];
+  shopSell: [event: { userId: string; item: ShopItem; quantity: number; revenue: number; newWallet: number; guildId?: string }];
+  businessCollect: [event: { userId: string; businessId: string; amount: number; newWallet: number; guildId?: string }];
+  loanDisbursed: [event: { userId: string; loan: UserLoan; guildId?: string }];
+  loanRepaid: [event: { userId: string; amountPaid: number; remainingDue: number; isFullyPaid: boolean; newCreditScore: number; guildId?: string }];
+  billsPaid: [event: { userId: string; totalAmountPaid: number; paidCount: number; newCreditScore: number; guildId?: string }];
+  vaultUpgraded: [event: { userId: string; newTier: BankVaultTier; cost: number; guildId?: string }];
+  crateOpened: [event: { userId: string; tier: CrateTier; rewards: CrateReward[]; guildId?: string }];
+  petAdopted: [event: { userId: string; pet: UserPet; cost: number; guildId?: string }];
+  stockTrade: [result: StockTradeResult & { userId: string; guildId?: string }];
+  bridgeAction: [action: { module: string; action: string; playerId: string; payload: any }];
+}

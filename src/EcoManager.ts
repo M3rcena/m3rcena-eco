@@ -6,6 +6,7 @@
  * @license Apache-2.0
  */
 
+import { EventEmitter } from "node:events";
 import { BankManager } from "./modules/BankManager.js";
 import { RewardManager } from "./modules/RewardManager.js";
 import { CareerManager } from "./modules/CareerManager.js";
@@ -48,6 +49,7 @@ import {
   CrateReward,
   EcoCustomMessages,
   EcoCustomEmojis,
+  EcoEvents,
   BankVaultTier,
   CreditScoreData,
   LoanTier,
@@ -56,7 +58,7 @@ import {
   MunicipalBill,
 } from "./types.js";
 
-export class EcoManager {
+export class EcoManager extends EventEmitter {
   public storage: EcoStorageAdapter;
   public bank: BankManager;
   public rewards: RewardManager;
@@ -83,6 +85,7 @@ export class EcoManager {
   private bridge?: any;
 
   constructor(options: EcoManagerOptions = {}) {
+    super();
     this.currencySymbol = options.currencySymbol ?? "🪙";
     this.currencyName = options.currencyName ?? "Coins";
     this.embedColor = options.embedColor ?? 0x5865f2;
@@ -198,6 +201,58 @@ export class EcoManager {
     return this;
   }
 
+  // --------------------------------------------------------------------------
+  // Strongly Typed Event Emitter Overrides
+  // --------------------------------------------------------------------------
+
+  public override emit<K extends keyof EcoEvents>(event: K, ...args: EcoEvents[K]): boolean;
+  public override emit(event: string | symbol, ...args: any[]): boolean;
+  public override emit(event: string | symbol, ...args: any[]): boolean {
+    return super.emit(event, ...args);
+  }
+
+  public override on<K extends keyof EcoEvents>(event: K, listener: (...args: EcoEvents[K]) => void): this;
+  public override on(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override on(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.on(event, listener as any);
+  }
+
+  public override once<K extends keyof EcoEvents>(event: K, listener: (...args: EcoEvents[K]) => void): this;
+  public override once(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override once(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.once(event, listener as any);
+  }
+
+  public override off<K extends keyof EcoEvents>(event: K, listener: (...args: EcoEvents[K]) => void): this;
+  public override off(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override off(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.off(event, listener as any);
+  }
+
+  public override addListener<K extends keyof EcoEvents>(event: K, listener: (...args: EcoEvents[K]) => void): this;
+  public override addListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.addListener(event, listener as any);
+  }
+
+  public override removeListener<K extends keyof EcoEvents>(event: K, listener: (...args: EcoEvents[K]) => void): this;
+  public override removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.removeListener(event, listener as any);
+  }
+
+  public override prependListener<K extends keyof EcoEvents>(event: K, listener: (...args: EcoEvents[K]) => void): this;
+  public override prependListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.prependListener(event, listener as any);
+  }
+
+  public override prependOnceListener<K extends keyof EcoEvents>(event: K, listener: (...args: EcoEvents[K]) => void): this;
+  public override prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.prependOnceListener(event, listener as any);
+  }
+
   /**
    * Dispatches an event to the bridge if connected.
    */
@@ -207,6 +262,7 @@ export class EcoManager {
     userId?: string,
     audioCue?: { sound: string; volume?: number }
   ): void {
+    this.emit("bridgeAction", { module: "economy", action: actionName, playerId: userId ?? "system", payload });
     if (!this.bridge) return;
 
     if (typeof this.bridge.dispatchAction === "function") {
@@ -263,12 +319,14 @@ export class EcoManager {
   public async addWallet(userId: string, amount: number, guildId?: string): Promise<number> {
     const newBal = await this.bank.addWallet(userId, amount, guildId);
     this.dispatchBridgeAction("wallet:add", { userId, amount, newWallet: newBal }, userId, { sound: "coin_drop" });
+    this.emit("walletAdd", { userId, amount, newWallet: newBal, guildId });
     return newBal;
   }
 
   public async removeWallet(userId: string, amount: number, guildId?: string): Promise<number> {
     const newBal = await this.bank.removeWallet(userId, amount, guildId);
     this.dispatchBridgeAction("wallet:remove", { userId, amount, newWallet: newBal }, userId);
+    this.emit("walletRemove", { userId, amount, newWallet: newBal, guildId });
     return newBal;
   }
 
@@ -276,6 +334,7 @@ export class EcoManager {
     const result = await this.bank.deposit(userId, amount, guildId);
     if (result.success) {
       this.dispatchBridgeAction("bank:deposit", { userId, deposited: result.deposited, wallet: result.wallet, bank: result.bank }, userId);
+      this.emit("deposit", { userId, deposited: result.deposited, wallet: result.wallet, bank: result.bank, guildId });
     }
     return result;
   }
@@ -284,6 +343,7 @@ export class EcoManager {
     const result = await this.bank.withdraw(userId, amount, guildId);
     if (result.success) {
       this.dispatchBridgeAction("bank:withdraw", { userId, withdrawn: result.withdrawn, wallet: result.wallet, bank: result.bank }, userId);
+      this.emit("withdraw", { userId, withdrawn: result.withdrawn, wallet: result.wallet, bank: result.bank, guildId });
     }
     return result;
   }
@@ -292,6 +352,7 @@ export class EcoManager {
     const result = await this.bank.transfer(fromUserId, toUserId, amount, guildId);
     if (result.success) {
       this.dispatchBridgeAction("bank:transfer", result, fromUserId, { sound: "coin_drop" });
+      this.emit("transfer", { ...result, guildId });
     }
     return result;
   }
@@ -304,6 +365,7 @@ export class EcoManager {
     const res = await this.rewards.claimDaily(userId, guildId);
     if (res.success) {
       this.dispatchBridgeAction("reward:daily", res, userId, { sound: "coin_drop" });
+      this.emit("dailyClaim", { userId, amount: res.amount, streak: res.streak, isMilestone: res.isMilestone, guildId });
     }
     return res;
   }
@@ -342,6 +404,7 @@ export class EcoManager {
       // Record shift in career
       const shiftRes = await this.careers.recordShift(userId, guildId);
       this.dispatchBridgeAction("reward:work", { ...res, careerShift: shiftRes }, userId, { sound: "coin_drop" });
+      this.emit("work", { userId, earned: res.earned, xp: res.xp, job: career ?? undefined, promoted: shiftRes.promoted, guildId });
       return { ...res, careerShift: shiftRes };
     }
     return res;
@@ -358,6 +421,7 @@ export class EcoManager {
   public async crime(userId: string, guildId?: string) {
     const res = await this.rewards.crime(userId, guildId);
     this.dispatchBridgeAction("reward:crime", res, userId, res.success ? { sound: "coin_drop" } : { sound: "rob_siren" });
+    this.emit("crime", { userId, success: res.success, earned: res.earned, fine: res.fine, crimeType: (res as any).crime, guildId });
     return res;
   }
 
@@ -369,6 +433,7 @@ export class EcoManager {
       robberId,
       res.success ? { sound: "win" } : { sound: "rob_siren" }
     );
+    this.emit("robbery", { ...res, guildId });
     return res;
   }
 
@@ -447,18 +512,21 @@ export class EcoManager {
   public async coinflip(userId: string, betAmount: number, choice: "heads" | "tails", guildId?: string) {
     const res = await this.casino.coinflip(userId, betAmount, choice, guildId);
     this.dispatchBridgeAction("casino:coinflip", res, userId, res.outcome === "win" ? { sound: "win" } : undefined);
+    this.emit("gamble", { ...res, userId, game: "coinflip", betAmount, guildId });
     return res;
   }
 
   public async dice(userId: string, betAmount: number, prediction: "high" | "low" | number, guildId?: string) {
     const res = await this.casino.dice(userId, betAmount, prediction, guildId);
     this.dispatchBridgeAction("casino:dice", res, userId, res.outcome === "win" ? { sound: "win" } : undefined);
+    this.emit("gamble", { ...res, userId, game: "dice", betAmount, guildId });
     return res;
   }
 
   public async slots(userId: string, betAmount: number, guildId?: string) {
     const res = await this.casino.slots(userId, betAmount, guildId);
     this.dispatchBridgeAction("casino:slots", res, userId, res.outcome === "win" ? { sound: "win" } : undefined);
+    this.emit("gamble", { ...res, userId, game: "slots", betAmount, guildId });
     return res;
   }
 
@@ -470,12 +538,14 @@ export class EcoManager {
   ) {
     const res = await this.casino.roulette(userId, betAmount, betType, guildId);
     this.dispatchBridgeAction("casino:roulette", res, userId, res.outcome === "win" ? { sound: "win" } : undefined);
+    this.emit("gamble", { ...res, userId, game: "roulette", betAmount, guildId });
     return res;
   }
 
   public async crash(userId: string, betAmount: number, targetMultiplier: number, guildId?: string) {
     const res = await this.casino.crash(userId, betAmount, targetMultiplier, guildId);
     this.dispatchBridgeAction("casino:crash", res, userId, res.outcome === "win" ? { sound: "win" } : undefined);
+    this.emit("gamble", { ...res, userId, game: "crash", betAmount, guildId });
     return res;
   }
 
@@ -612,6 +682,7 @@ export class EcoManager {
       undefined,
       result.success ? { sound: "win" } : { sound: "rob_siren" }
     );
+    this.emit("heist", result);
     return result;
   }
 
@@ -675,6 +746,7 @@ export class EcoManager {
   public async openCrate(userId: string, tier: CrateTier, guildId?: string): Promise<CrateReward> {
     const reward = await this.crates.openCrate(userId, tier, guildId);
     this.dispatchBridgeAction("crate:opened", { userId, tier, reward }, userId, { sound: "win" });
+    this.emit("crateOpened", { userId, tier, rewards: [reward], guildId });
     return reward;
   }
 
@@ -688,8 +760,9 @@ export class EcoManager {
 
   public async upgradeVault(userId: string, guildId?: string) {
     const res = await this.vault.upgradeVault(userId, guildId);
-    if (res.success) {
+    if (res.success && res.newTier) {
       this.dispatchBridgeAction("vault:upgraded", res, userId, { sound: "purchase" });
+      this.emit("vaultUpgraded", { userId, newTier: res.newTier, cost: res.cost, guildId });
     }
     return res;
   }
@@ -716,8 +789,9 @@ export class EcoManager {
 
   public async applyLoan(userId: string, tier: LoanTier, guildId?: string) {
     const res = await this.loans.applyLoan(userId, tier, guildId);
-    if (res.success) {
+    if (res.success && res.loan) {
       this.dispatchBridgeAction("loan:approved", res, userId, { sound: "coin_drop" });
+      this.emit("loanDisbursed", { userId, loan: res.loan, guildId });
     }
     return res;
   }
@@ -726,6 +800,7 @@ export class EcoManager {
     const res = await this.loans.repayLoan(userId, loanId, amount, guildId);
     if (res.success) {
       this.dispatchBridgeAction("loan:repaid", res, userId, res.isFullyPaid ? { sound: "win" } : undefined);
+      this.emit("loanRepaid", { userId, amountPaid: res.amountPaid, remainingDue: res.remainingDue, settled: res.isFullyPaid, newCreditScore: res.newCreditScore, guildId });
     }
     return res;
   }
@@ -766,6 +841,7 @@ export class EcoManager {
     const res = await this.taxes.payAllBills(userId, guildId);
     if (res.success) {
       this.dispatchBridgeAction("bills:all_paid", res, userId, { sound: "win" });
+      this.emit("billsPaid", { userId, totalAmountPaid: res.totalAmountPaid, paidCount: res.paidCount, newCreditScore: res.newCreditScore, guildId });
     }
     return res;
   }

@@ -89,6 +89,32 @@ export interface EcoRewardDistributionResult {
   wagerWon?: number;
 }
 
+export interface EcoWagerResolvedEvent {
+  wager: EcoWagerRecord;
+  winnerId: string;
+  loserId: string;
+  payout: number;
+  houseFee: number;
+}
+
+export interface EcoWagerRefundedEvent {
+  wager: EcoWagerRecord;
+  reason: string;
+}
+
+/**
+ * Type-safe map of events emitted by EcoWekyConnector.
+ */
+export interface EcoWekyConnectorEvents {
+  wagerCreated: [wager: EcoWagerRecord];
+  wagerResolved: [event: EcoWagerResolvedEvent];
+  wagerRefunded: [event: EcoWagerRefundedEvent];
+  reward: [result: EcoRewardDistributionResult];
+  penalty: [result: EcoRewardDistributionResult];
+  tournamentReward: [result: EcoRewardDistributionResult];
+  error: [error: any];
+}
+
 export class EcoWekyConnector extends EventEmitter {
   public readonly eco: EcoManager;
   public readonly weky: any;
@@ -124,6 +150,58 @@ export class EcoWekyConnector extends EventEmitter {
     };
 
     this.initListeners();
+  }
+
+  // --------------------------------------------------------------------------
+  // Strongly-Typed EventEmitter Overrides
+  // --------------------------------------------------------------------------
+
+  public override on<K extends keyof EcoWekyConnectorEvents>(event: K, listener: (...args: EcoWekyConnectorEvents[K]) => void): this;
+  public override on(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override on(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.on(event, listener);
+  }
+
+  public override once<K extends keyof EcoWekyConnectorEvents>(event: K, listener: (...args: EcoWekyConnectorEvents[K]) => void): this;
+  public override once(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override once(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.once(event, listener);
+  }
+
+  public override emit<K extends keyof EcoWekyConnectorEvents>(event: K, ...args: EcoWekyConnectorEvents[K]): boolean;
+  public override emit(event: string | symbol, ...args: any[]): boolean;
+  public override emit(event: string | symbol, ...args: any[]): boolean {
+    return super.emit(event, ...args);
+  }
+
+  public override off<K extends keyof EcoWekyConnectorEvents>(event: K, listener: (...args: EcoWekyConnectorEvents[K]) => void): this;
+  public override off(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override off(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.off(event, listener);
+  }
+
+  public override addListener<K extends keyof EcoWekyConnectorEvents>(event: K, listener: (...args: EcoWekyConnectorEvents[K]) => void): this;
+  public override addListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.addListener(event, listener);
+  }
+
+  public override removeListener<K extends keyof EcoWekyConnectorEvents>(event: K, listener: (...args: EcoWekyConnectorEvents[K]) => void): this;
+  public override removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.removeListener(event, listener);
+  }
+
+  public override prependListener<K extends keyof EcoWekyConnectorEvents>(event: K, listener: (...args: EcoWekyConnectorEvents[K]) => void): this;
+  public override prependListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.prependListener(event, listener);
+  }
+
+  public override prependOnceListener<K extends keyof EcoWekyConnectorEvents>(event: K, listener: (...args: EcoWekyConnectorEvents[K]) => void): this;
+  public override prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.prependOnceListener(event, listener);
   }
 
   private initListeners(): void {
