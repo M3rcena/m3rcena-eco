@@ -145,3 +145,4 @@ describe("EcoManager SQLite & Prisma Database Handler", () => {
     boxConsole(["Test Line 1", "Test Line 2"]);
   });
 });
+

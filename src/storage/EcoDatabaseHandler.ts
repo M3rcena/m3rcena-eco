@@ -74,3 +74,4 @@ export function resolveEcoStorage(options: { storage?: any; database?: EcoDataba
   }
   return new MemoryEcoStorage();
 }
+
