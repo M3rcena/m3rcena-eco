@@ -1,6 +1,6 @@
 {
   "name": "@m3rcena/eco",
-  "version": "1.0.0",
+  "version": "14.28.0",
   "description": "The ultimate Discord.js v14 economy engine. Dual wallet/bank, career jobs, items & inventory, businesses, interactive casino gambling, robbery, market trading, and web dashboard bridge.",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

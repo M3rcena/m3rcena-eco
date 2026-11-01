@@ -19,3 +19,4 @@ If you discover a security vulnerability in `@m3rcena/eco`, please report it pri
 - **GitHub**: Use private vulnerability reporting on the repository.
 
 Please do not open public issues for sensitive security vulnerabilities. We will respond within 48 hours to confirm the report and provide a coordinated timeline for disclosure.
+

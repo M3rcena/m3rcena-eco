@@ -237,3 +237,4 @@ export class CareerManager {
     return Math.floor(job.baseSalary * multiplier);
   }
 }
+
