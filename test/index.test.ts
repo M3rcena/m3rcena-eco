@@ -19,6 +19,8 @@ import {
   DEFAULT_JOBS,
   DEFAULT_SHOP_ITEMS,
   DEFAULT_BUSINESS_CATALOG,
+  RenderBankCard,
+  RenderMarketChart,
 } from "../src/index.js";
 import { M3rcenaBridge } from "@m3rcena/bridge";
 
@@ -545,6 +547,206 @@ describe("EcoManager Dashboard Bridge Integration", () => {
 
     const purchaseSound = capturedAudioCues.find((c) => c.sound === "purchase");
     assert.ok(purchaseSound);
+  });
+});
+
+describe("EcoManager Stock & Crypto Market Exchange", () => {
+  let eco: EcoManager;
+
+  before(() => {
+    eco = new EcoManager({ defaultWalletBalance: 500000 });
+  });
+
+  test("lists active simulated stocks and crypto assets", () => {
+    const stocks = eco.getStocks();
+    assert.ok(stocks.length >= 5);
+    const aeth = eco.getStock("$AETH");
+    assert.ok(aeth);
+    assert.equal(aeth.symbol, "$AETH");
+  });
+
+  test("buys shares of stock and updates portfolio", async () => {
+    const res = await eco.buyStock("trader_1", "$AETH", 10);
+    assert.equal(res.symbol, "$AETH");
+    assert.equal(res.shares, 10);
+    assert.ok(res.totalAmount > 0);
+
+    const portfolio = await eco.getStockPortfolio("trader_1");
+    const pos = portfolio.positions.find((p) => p.symbol === "$AETH");
+    assert.ok(pos);
+    assert.equal(pos.shares, 10);
+    assert.ok(portfolio.totalPortfolioValue > 0);
+  });
+
+  test("sells shares and calculates realized profit/loss", async () => {
+    const res = await eco.sellStock("trader_1", "$AETH", 5);
+    assert.equal(res.symbol, "$AETH");
+    assert.equal(res.shares, 5);
+    assert.ok(res.totalAmount > 0);
+
+    const portfolio = await eco.getStockPortfolio("trader_1");
+    const pos = portfolio.positions.find((p) => p.symbol === "$AETH");
+    assert.ok(pos);
+    assert.equal(pos.shares, 5);
+  });
+
+  test("ticks stock market prices and maintains history", () => {
+    const aethBefore = eco.getStock("$AETH")!;
+    const historyLenBefore = aethBefore.history.length;
+
+    eco.tickStockMarket();
+
+    const aethAfter = eco.getStock("$AETH")!;
+    assert.ok(aethAfter.currentPrice > 0);
+    assert.ok(aethAfter.history.length >= historyLenBefore);
+  });
+});
+
+describe("EcoManager Multiplayer Syndicate Heists", () => {
+  let eco: EcoManager;
+
+  before(() => {
+    eco = new EcoManager({ defaultWalletBalance: 100000 });
+  });
+
+  test("lists target vaults with difficulty and bounty brackets", () => {
+    const targets = eco.getHeistTargets();
+    assert.ok(targets.length >= 3);
+    const mart = targets.find((t) => t.id === "corner_store");
+    assert.ok(mart);
+    assert.equal(mart.difficulty, "EASY");
+  });
+
+  test("creates a heist lobby and recruits crew members with roles", async () => {
+    const session = await eco.createHeist("mastermind", "corner_store");
+    assert.equal(session.initiatorId, "mastermind");
+    assert.equal(session.phase, "LOBBY");
+    assert.equal(session.crew.length, 1);
+
+    const joinRes = await eco.joinHeist(session.id, "getaway_driver", "DRIVER", "Speedy");
+    assert.equal(joinRes.success, true);
+    assert.equal(joinRes.session.crew.length, 2);
+  });
+
+  test("executes heist and distributes loot or bails crew", async () => {
+    const session = await eco.createHeist("boss", "corner_store");
+    const outcome = await eco.executeHeist(session.id);
+
+    assert.ok(typeof outcome.success === "boolean");
+    assert.equal(outcome.crewCount, 1);
+    if (outcome.success) {
+      assert.ok(outcome.totalLoot > 0);
+      assert.ok(outcome.sharePerPlayer > 0);
+    } else {
+      assert.ok((outcome.finePerPlayer || 0) > 0);
+    }
+  });
+});
+
+describe("EcoManager Companion Pets & Foraging", () => {
+  let eco: EcoManager;
+
+  before(() => {
+    eco = new EcoManager({ defaultWalletBalance: 200000 });
+  });
+
+  test("browses available pet catalog", () => {
+    const pets = eco.getAvailablePets();
+    assert.ok(pets.length >= 3);
+    const k9 = pets.find((p) => p.id === "cyber_hound");
+    assert.ok(k9);
+    assert.equal(k9.species, "Canine");
+  });
+
+  test("adopts a pet and saves to shelter", async () => {
+    const pet = await eco.adoptPet("trainer_1", "cyber_hound", "Bolt");
+    assert.equal(pet.name, "Bolt");
+    assert.equal(pet.species, "Canine");
+    assert.equal(pet.level, 1);
+
+    const shelter = await eco.getUserPets("trainer_1");
+    assert.equal(shelter.length, 1);
+    assert.equal(shelter[0].name, "Bolt");
+  });
+
+  test("feeds pet and restores hunger / awards XP", async () => {
+    const res = await eco.feedPet("trainer_1", "cyber_hound");
+    assert.equal(res.success, true);
+    assert.ok(res.pet.hunger >= 100);
+    assert.ok(res.pet.xp > 0);
+  });
+
+  test("dispatches pet on expedition and rejects premature claim", async () => {
+    const exp = await eco.sendPetExpedition("trainer_1", "cyber_hound");
+    assert.equal(exp.success, true);
+    assert.ok(exp.finishesAt > Date.now());
+
+    await assert.rejects(
+      async () => {
+        await eco.claimPetExpedition("trainer_1", "cyber_hound");
+      },
+      /Expedition still in progress/
+    );
+  });
+});
+
+describe("EcoManager Mystery Loot Crates", () => {
+  let eco: EcoManager;
+
+  before(() => {
+    eco = new EcoManager({ defaultWalletBalance: 500000 });
+  });
+
+  test("retrieves crate prices per tier", () => {
+    assert.equal(eco.getCratePrice("common"), 5000);
+    assert.equal(eco.getCratePrice("rare"), 25000);
+    assert.equal(eco.getCratePrice("epic"), 100000);
+  });
+
+  test("unboxes a rare mystery crate and receives coins and XP", async () => {
+    const reward = await eco.openCrate("loot_goblin", "rare");
+    assert.equal(reward.tier, "rare");
+    assert.ok(reward.coins > 0);
+    assert.ok(reward.xp > 0);
+  });
+
+  test("fails to open crate without sufficient wallet balance", async () => {
+    await assert.rejects(
+      async () => {
+        await eco.openCrate("broke_user", "mythic");
+      },
+      /Insufficient funds/
+    );
+  });
+});
+
+describe("EcoManager Canvas Debit Card & Chart Renderers", () => {
+  test("renders high-resolution debit card image buffer", async () => {
+    const cardBuffer = await RenderBankCard.renderCard({
+      username: "d4rk.s0ul",
+      wallet: 45200,
+      bank: 250000,
+      netWorth: 295200,
+      currencySymbol: "🪙",
+    });
+
+    assert.ok(cardBuffer);
+    assert.ok(cardBuffer instanceof Buffer);
+    assert.ok(cardBuffer.length > 5000);
+  });
+
+  test("renders stock price chart with sparkline / candlestick buffer", async () => {
+    const chartBuffer = await RenderMarketChart.renderChart({
+      symbol: "$AETH",
+      name: "Aether AI Robotics",
+      currentPrice: 145.5,
+      change24h: 3.75,
+      history: [138, 140, 142, 141, 144, 145.5],
+    });
+
+    assert.ok(chartBuffer);
+    assert.ok(chartBuffer instanceof Buffer);
+    assert.ok(chartBuffer.length > 5000);
   });
 });
 

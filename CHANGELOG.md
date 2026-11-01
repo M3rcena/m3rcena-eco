@@ -58,6 +58,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Auto-registers the `"economy"` module with dashboard gateways.
   - Real-time action dispatching for wallet changes, bank deposits, casino outcomes, and shop trades.
   - Real-time scoped audio cues (`coin_drop`, `win`, `purchase`, `rob_siren`) with presence filtering.
+- **Stock & Cryptocurrency Exchange (`StockMarketManager`)**:
+  - Simulated equities and crypto ($AETH, $NEXU, $CORE, ₿BIT, ΞETH).
+  - Volatility engine, Bull/Bear market shifts, 24h change %, and price history.
+  - User portfolios with weighted cost basis and real-time unrealized PnL.
+  - Real-time market candlestick / sparkline canvas charting (`RenderMarketChart`).
+- **Multiplayer Syndicate Bank Heists (`HeistManager`)**:
+  - Vault target catalog from Nightshift Mart Safe to Federal Reserve Sub-Basement.
+  - Role recruitment system (`Hacker`, `Driver`, `Demolitionist`, `Muscle`).
+  - Cooperative crew breach simulation with loot split calculation and SWAT bail fines.
+- **Companion Pets & Foraging Expeditions (`PetManager`)**:
+  - Adoptable companions (Cybernetic K9, Lucky Cat, Obsidian Drake, Void Phoenix).
+  - Pet leveling, hunger decay, happiness metrics, and feeding mechanics.
+  - Timed foraging expeditions returning randomized coins, XP, and items.
+- **Quantum Mystery Loot Crates (`CrateManager`)**:
+  - Multi-tier mystery crates (`Common`, `Rare`, `Epic`, `Legendary`, `Mythic`).
+  - Weighted drop distribution tables with randomized coin bonuses and shop items.
+- **Visual Canvas Generation (`@napi-rs/canvas`)**:
+  - `RenderBankCard`: 850x500 high-res debit cards with dynamic tier gradients, laser chips, contactless arcs, user avatars, and net worth stamping.
+  - `RenderMarketChart`: 800x400 neon candlestick/sparkline charts with gradient fills and 24h change indicators.
+- **Ready-to-Run Discord Components V2 UI Modules (`src/ui/`)**:
+  - `EcoProfileUI`: Financial passport with visual debit card and tabbed views (`Overview`, `Backpack`, `Businesses`, `Stocks`, `Pets`).
+  - `EcoStockMarketUI`: Interactive live trading terminal with chart attachment, ticker select, buy/sell buttons, and live refresh.
+  - `EcoHeistUI`: Interactive syndicate heist lobby with role claim buttons and breach simulation.
+  - `EcoBlackjackUI`: VIP Blackjack table with Components V2 buttons (`Hit`, `Stand`, `Double Down`).
+  - `EcoCrateUI`: Animated mystery loot crate unboxing terminal.
+  - `EcoShopUI`: Category-filtered marketplace with interactive select menus and buy buttons.
+  - `EcoLeaderboardUI`: Paginated server leaderboards with metric selection.
 - **Modern Node.js Engine Support**:
   - Built for Node.js 22 LTS, 24 LTS, and 26 LTS.
   - TypeScript 7.0 with dual CJS and ESM exports and `.d.cts` / `.d.mts` definitions via Rolldown.

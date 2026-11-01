@@ -64,6 +64,7 @@
   },
   "dependencies": {
     "@m3rcena/bridge": "file:../m3rcena-bridge",
+    "@napi-rs/canvas": "^0.1.68",
     "discord.js": "^14.28.0"
   },
   "devDependencies": {

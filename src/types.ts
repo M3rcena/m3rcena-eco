@@ -1,10 +1,12 @@
 /**
  * @m3rcena/eco
- * Complete TypeScript Type Definitions for the Discord Economy Engine.
+ * Complete TypeScript Type Definitions for the Ultimate Discord Economy Engine.
  *
  * @copyright 2026 M3rcena Development. All rights reserved.
  * @license Apache-2.0
  */
+
+import { ColorResolvable } from "discord.js";
 
 export interface InventoryItem {
   id: string;
@@ -22,14 +24,14 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  category: "consumable" | "upgrade" | "collectible" | "tool" | "role" | string;
+  category: "consumable" | "upgrade" | "collectible" | "tool" | "crate" | "role" | string;
   rarity?: "common" | "uncommon" | "rare" | "epic" | "legendary" | "mythic";
   stock?: number;
   maxPurchases?: number;
   consumable?: boolean;
   resaleValue?: number;
   roleRewardId?: string;
-  usableEffect?: "shield" | "cooldown_reset" | "gamble_luck" | "xp_boost" | string;
+  usableEffect?: "shield" | "cooldown_reset" | "gamble_luck" | "xp_boost" | "crate_key" | string;
   effectDurationMs?: number;
   effectMagnitude?: number;
 }
@@ -92,8 +94,179 @@ export interface UserStats {
   timesRobbed: number;
   jobsCompleted: number;
   itemsBought: number;
+  heistsCompleted?: number;
+  stockTrades?: number;
 }
 
+// ----------------------------------------------------------------------------
+// Stock & Crypto Market Types
+// ----------------------------------------------------------------------------
+export type StockMarketTrend = "BULL" | "BEAR" | "STABLE" | "VOLATILE" | "CRASH" | "MOON";
+
+export interface StockConfig {
+  symbol: string;
+  name: string;
+  category: "TECH" | "CRYPTO" | "FINANCE" | "MINING" | "ENERGY" | string;
+  basePrice: number;
+  currentPrice: number;
+  high24h: number;
+  low24h: number;
+  change24h: number; // percentage, e.g. +14.5 or -8.2
+  history: number[]; // Array of last 10-20 prices for sparkline chart
+  volatility: number; // 0.01 to 0.15
+  dividendYield?: number; // 0.01 to 0.05
+  description: string;
+}
+
+export interface UserStockPosition {
+  symbol: string;
+  shares: number;
+  totalInvested: number;
+  averageBuyPrice: number;
+  lastTradeTimestamp: number;
+}
+
+export interface StockTradeResult {
+  success: boolean;
+  action: "BUY" | "SELL";
+  symbol: string;
+  shares: number;
+  pricePerShare: number;
+  totalAmount: number;
+  userWallet: number;
+  sharesRemaining: number;
+  profitOrLoss?: number;
+  error?: string;
+}
+
+// ----------------------------------------------------------------------------
+// Heists & Crime Syndicates Types
+// ----------------------------------------------------------------------------
+export type HeistRole = "HACKER" | "DRIVER" | "DEMOLITIONIST" | "MUSCLE";
+
+export interface HeistTarget {
+  id: string;
+  name: string;
+  difficulty: "EASY" | "MEDIUM" | "HARD" | "IMPOSSIBLE";
+  minLevel: number;
+  minCrew: number;
+  maxCrew: number;
+  baseBountyMin: number;
+  baseBountyMax: number;
+  failureBail: number;
+  description: string;
+  successRate: number; // 0.35 to 0.85
+}
+
+export interface HeistCrewMember {
+  userId: string;
+  username: string;
+  role: HeistRole;
+  ready: boolean;
+}
+
+export interface HeistSession {
+  id: string;
+  guildId?: string;
+  initiatorId: string;
+  target: HeistTarget;
+  crew: HeistCrewMember[];
+  phase: "LOBBY" | "PLANNING" | "EXECUTION" | "ESCAPE" | "CONCLUDED";
+  createdAt: number;
+  success?: boolean;
+  totalLoot?: number;
+  lootSplit?: Record<string, number>;
+  log: string[];
+}
+
+export interface HeistResult {
+  success: boolean;
+  targetName: string;
+  totalLoot: number;
+  crewCount: number;
+  sharePerPlayer: number;
+  finePerPlayer?: number;
+  log: string[];
+}
+
+// ----------------------------------------------------------------------------
+// Pets & Companions Types
+// ----------------------------------------------------------------------------
+export interface PetConfig {
+  id: string;
+  name: string;
+  species: string;
+  rarity: "common" | "rare" | "epic" | "legendary" | "mythic";
+  buyCost: number;
+  description: string;
+  emoji: string;
+  workMultiplierBonus: number; // e.g. 0.15 for +15%
+  crimeProtectionBonus: number; // e.g. 0.10 for +10%
+  luckBonus: number; // e.g. 0.05
+}
+
+export interface UserPet {
+  id: string;
+  petId: string;
+  name: string;
+  species: string;
+  level: number;
+  xp: number;
+  hunger: number; // 0 - 100
+  happiness: number; // 0 - 100
+  acquiredAt: number;
+  isExpeditionActive: boolean;
+  expeditionReturnsAt?: number;
+  expeditionReward?: {
+    coins: number;
+    xp: number;
+    foundItem?: string;
+  };
+}
+
+export interface PetExpeditionResult {
+  coins: number;
+  xp: number;
+  petLevel: number;
+}
+
+// ----------------------------------------------------------------------------
+// Skill Tree & Prestige Types
+// ----------------------------------------------------------------------------
+export interface SkillTree {
+  hustler: number; // +5% work salary per rank (max 10)
+  mastermind: number; // -4% crime failure chance per rank (max 10)
+  highRoller: number; // +$15,000 bank capacity per rank (max 10)
+  fortune: number; // +2% casino luck per rank (max 10)
+  tycoon: number; // +10% passive business income per rank (max 10)
+  availablePoints: number;
+}
+
+export interface Prestige {
+  rank: number;
+  starEmoji: string;
+  globalMultiplier: number;
+  totalResets: number;
+  lastPrestigeAt?: number;
+}
+
+// ----------------------------------------------------------------------------
+// Loot Crates Types
+// ----------------------------------------------------------------------------
+export type CrateTier = "common" | "rare" | "epic" | "legendary" | "mythic";
+
+export interface CrateReward {
+  tier: CrateTier;
+  coins: number;
+  xp: number;
+  item?: ShopItem;
+  shares?: { symbol: string; count: number };
+  announcement: string;
+}
+
+// ----------------------------------------------------------------------------
+// User Account Model
+// ----------------------------------------------------------------------------
 export interface UserAccount {
   userId: string;
   guildId?: string;
@@ -117,6 +290,10 @@ export interface UserAccount {
   inventory: InventoryItem[];
   businesses: UserBusiness[];
   activeEffects: ActiveEffect[];
+  stocks?: UserStockPosition[];
+  pets?: UserPet[];
+  skills?: SkillTree;
+  prestige?: Prestige;
   stats: UserStats;
   createdAt: number;
   updatedAt: number;
@@ -156,15 +333,67 @@ export interface RobResult {
   message: string;
 }
 
+// ----------------------------------------------------------------------------
+// Weky-Style Customizability Options
+// ----------------------------------------------------------------------------
+export interface EcoCustomMessages {
+  workSuccess?: string;
+  dailyClaimed?: string;
+  weeklyClaimed?: string;
+  monthlyClaimed?: string;
+  hourlyClaimed?: string;
+  begSuccess?: string;
+  begFailed?: string;
+  crimeSuccess?: string;
+  crimeFailed?: string;
+  robSuccess?: string;
+  robFailed?: string;
+  robShieldBlocked?: string;
+  depositSuccess?: string;
+  withdrawSuccess?: string;
+  levelUp?: string;
+  prestigeAchieved?: string;
+  heistSuccess?: string;
+  heistFailed?: string;
+  stockBuySuccess?: string;
+  stockSellSuccess?: string;
+  crateOpen?: string;
+}
+
+export interface EcoCustomEmojis {
+  wallet?: string;
+  bank?: string;
+  netWorth?: string;
+  gems?: string;
+  streak?: string;
+  level?: string;
+  shield?: string;
+  stockBull?: string;
+  stockBear?: string;
+  pet?: string;
+  crate?: string;
+  heist?: string;
+}
+
 export interface EcoManagerOptions {
   currencySymbol?: string;
   currencyName?: string;
+  secondaryCurrencySymbol?: string;
+  secondaryCurrencyName?: string;
+  embedColor?: ColorResolvable | number | string;
+  mode?: "guild" | "global";
   defaultBankCapacity?: number;
   defaultWalletBalance?: number;
   bankInterestRate?: number; // e.g. 0.01 for 1% daily interest
   transactionFeePercentage?: number; // e.g. 0.02 for 2% transfer fee
   storage?: any;
   bridge?: any; // M3rcenaBridge instance
+  customMessages?: Partial<EcoCustomMessages>;
+  emojis?: Partial<EcoCustomEmojis>;
+  stockMarketTickIntervalMs?: number; // default 60000 (1 min)
+  initialStocks?: StockConfig[];
+  initialHeistTargets?: HeistTarget[];
+  initialPets?: PetConfig[];
   cooldowns?: {
     daily?: number;
     weekly?: number;
@@ -176,4 +405,3 @@ export interface EcoManagerOptions {
     rob?: number;
   };
 }
-

@@ -13,6 +13,10 @@ import { ShopManager } from "./modules/ShopManager.js";
 import { BusinessManager } from "./modules/BusinessManager.js";
 import { CasinoManager, BlackjackState } from "./modules/CasinoManager.js";
 import { LeaderboardManager, LeaderboardMetric, LeaderboardEntry } from "./modules/LeaderboardManager.js";
+import { StockMarketManager } from "./modules/StockMarketManager.js";
+import { HeistManager } from "./modules/HeistManager.js";
+import { PetManager } from "./modules/PetManager.js";
+import { CrateManager } from "./modules/CrateManager.js";
 import { EcoStorageAdapter, MemoryEcoStorage, JsonEcoStorage } from "./storage/EcoStorage.js";
 import {
   EcoManagerOptions,
@@ -23,6 +27,20 @@ import {
   ShopItem,
   CareerJob,
   BusinessConfig,
+  StockConfig,
+  StockTradeResult,
+  UserStockPosition,
+  HeistTarget,
+  HeistRole,
+  HeistSession,
+  HeistResult,
+  PetConfig,
+  UserPet,
+  PetExpeditionResult,
+  CrateTier,
+  CrateReward,
+  EcoCustomMessages,
+  EcoCustomEmojis,
 } from "./types.js";
 
 export class EcoManager {
@@ -34,14 +52,24 @@ export class EcoManager {
   public businesses: BusinessManager;
   public casino: CasinoManager;
   public leaderboards: LeaderboardManager;
+  public stocks: StockMarketManager;
+  public heist: HeistManager;
+  public pets: PetManager;
+  public crates: CrateManager;
 
   public currencySymbol: string;
   public currencyName: string;
+  public embedColor?: any;
+  public customMessages?: Partial<EcoCustomMessages>;
+  public emojis?: Partial<EcoCustomEmojis>;
   private bridge?: any;
 
   constructor(options: EcoManagerOptions = {}) {
     this.currencySymbol = options.currencySymbol ?? "🪙";
     this.currencyName = options.currencyName ?? "Coins";
+    this.embedColor = options.embedColor ?? 0x5865f2;
+    this.customMessages = options.customMessages;
+    this.emojis = options.emojis;
 
     // 1. Storage
     this.storage = options.storage ?? new MemoryEcoStorage();
@@ -71,7 +99,19 @@ export class EcoManager {
     // 8. Leaderboards
     this.leaderboards = new LeaderboardManager(this.storage, this.shop, this.businesses);
 
-    // 9. Bridge integration
+    // 9. Stocks & Crypto Exchange
+    this.stocks = new StockMarketManager(this.bank, options.initialStocks);
+
+    // 10. Multiplayer Syndicate Heists
+    this.heist = new HeistManager(this.bank, options.initialHeistTargets);
+
+    // 11. Pets & Companions
+    this.pets = new PetManager(this.bank, options.initialPets);
+
+    // 12. Mystery Loot Crates
+    this.crates = new CrateManager(this.bank);
+
+    // 13. Bridge integration
     if (options.bridge) {
       this.setBridge(options.bridge);
     }
@@ -412,5 +452,159 @@ export class EcoManager {
   ): Promise<string> {
     const entries = await this.getLeaderboard(metric, limit, guildId);
     return this.leaderboards.formatLeaderboard(entries, metric, this.currencySymbol);
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* STOCK & CRYPTOCURRENCY EXCHANGE                                            */
+  /* -------------------------------------------------------------------------- */
+
+  public getStocks(): StockConfig[] {
+    return this.stocks.getStocks();
+  }
+
+  public getStock(symbol: string): StockConfig | undefined {
+    return this.stocks.getStock(symbol);
+  }
+
+  public tickStockMarket(): void {
+    this.stocks.tickMarket();
+    this.dispatchBridgeAction("stocks:tick", {
+      trend: this.stocks.getMarketTrend(),
+      stocks: this.stocks.getStocks().map((s) => ({ symbol: s.symbol, price: s.currentPrice, change: s.change24h })),
+    });
+  }
+
+  public async buyStock(userId: string, symbol: string, shares: number, guildId?: string): Promise<StockTradeResult> {
+    const result = await this.stocks.buyStock(userId, symbol, shares, guildId);
+    this.dispatchBridgeAction("stocks:buy", result, userId, { sound: "purchase" });
+    return result;
+  }
+
+  public async sellStock(userId: string, symbol: string, shares: number, guildId?: string): Promise<StockTradeResult> {
+    const result = await this.stocks.sellStock(userId, symbol, shares, guildId);
+    this.dispatchBridgeAction("stocks:sell", result, userId, { sound: "coin_drop" });
+    return result;
+  }
+
+  public async getStockPortfolio(userId: string, guildId?: string): Promise<{
+    userId: string;
+    positions: {
+      symbol: string;
+      name: string;
+      shares: number;
+      averageBuyPrice: number;
+      currentPrice: number;
+      currentValue: number;
+      profitOrLoss: number;
+      profitOrLossPercentage: number;
+    }[];
+    totalPortfolioValue: number;
+  }> {
+    return this.stocks.getUserPortfolio(userId, guildId);
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* MULTIPLAYER SYNDICATE HEISTS                                               */
+  /* -------------------------------------------------------------------------- */
+
+  public getHeistTargets(): HeistTarget[] {
+    return this.heist.getTargets();
+  }
+
+  public async createHeist(leaderId: string, targetId: string, guildId?: string): Promise<HeistSession> {
+    const res = await this.heist.createLobby(leaderId, leaderId, targetId, guildId);
+    if (!res.success || !res.session) {
+      throw new Error(res.error || "Failed to create heist lobby.");
+    }
+    this.dispatchBridgeAction("heist:created", { heistId: res.session.id, leaderId, targetId });
+    return res.session;
+  }
+
+  public async joinHeist(
+    heistId: string,
+    userId: string,
+    role: HeistRole,
+    username?: string
+  ): Promise<{ success: boolean; session: HeistSession; message?: string }> {
+    const res = await this.heist.joinLobby(heistId, userId, username || userId, role);
+    if (!res.success || !res.session) {
+      throw new Error(res.error || "Failed to join heist lobby.");
+    }
+    this.dispatchBridgeAction("heist:joined", { heistId, userId, role, username });
+    return { success: true, session: res.session };
+  }
+
+  public async executeHeist(heistId: string): Promise<HeistResult> {
+    const result = await this.heist.executeHeist(heistId);
+    this.dispatchBridgeAction(
+      "heist:executed",
+      result,
+      undefined,
+      result.success ? { sound: "win" } : { sound: "rob_siren" }
+    );
+    return result;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* PETS & COMPANIONS                                                          */
+  /* -------------------------------------------------------------------------- */
+
+  public getAvailablePets(): PetConfig[] {
+    return this.pets.getCatalog();
+  }
+
+  public async getUserPets(userId: string, guildId?: string): Promise<UserPet[]> {
+    const acc = await this.bank.getAccount(userId, guildId);
+    return acc.pets || [];
+  }
+
+  public async adoptPet(userId: string, petId: string, customName?: string, guildId?: string): Promise<UserPet> {
+    const res = await this.pets.adoptPet(userId, petId, customName, guildId);
+    if (!res.success || !res.pet) {
+      throw new Error(res.error || "Failed to adopt pet.");
+    }
+    this.dispatchBridgeAction("pet:adopted", { userId, pet: res.pet }, userId, { sound: "purchase" });
+    return res.pet;
+  }
+
+  public async feedPet(userId: string, petId: string, guildId?: string): Promise<{ success: boolean; pet: UserPet; cost: number }> {
+    const res = await this.pets.feedPet(userId, petId, guildId);
+    if (!res.success || !res.pet) {
+      throw new Error(res.error || "Failed to feed pet.");
+    }
+    this.dispatchBridgeAction("pet:fed", { userId, petId, cost: 250 });
+    return { success: true, pet: res.pet, cost: 250 };
+  }
+
+  public async sendPetExpedition(userId: string, petId: string, guildId?: string): Promise<{ success: boolean; finishesAt: number }> {
+    const res = await this.pets.sendExpedition(userId, petId, 2, guildId);
+    if (!res.success || !res.returnsAt) {
+      throw new Error(res.error || "Failed to start expedition.");
+    }
+    this.dispatchBridgeAction("pet:expedition_started", { userId, petId, finishesAt: res.returnsAt });
+    return { success: true, finishesAt: res.returnsAt };
+  }
+
+  public async claimPetExpedition(userId: string, petId: string, guildId?: string): Promise<PetExpeditionResult> {
+    const res = await this.pets.claimExpedition(userId, petId, guildId);
+    if (!res.success || !res.reward) {
+      throw new Error(res.error || "Failed to claim expedition.");
+    }
+    this.dispatchBridgeAction("pet:expedition_claimed", { userId, petId, result: res.reward }, userId, { sound: "win" });
+    return res.reward;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* MYSTERY LOOT CRATES                                                        */
+  /* -------------------------------------------------------------------------- */
+
+  public getCratePrice(tier: CrateTier): number {
+    return this.crates.getCratePrice(tier);
+  }
+
+  public async openCrate(userId: string, tier: CrateTier, guildId?: string): Promise<CrateReward> {
+    const reward = await this.crates.openCrate(userId, tier, guildId);
+    this.dispatchBridgeAction("crate:opened", { userId, tier, reward }, userId, { sound: "win" });
+    return reward;
   }
 }
