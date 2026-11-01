@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="./assets/logo.png" alt="Eco Logo" width="220" />
   <h1>🪙 @m3rcena/eco</h1>
   <p><strong>The ultimate enterprise-grade Discord.js v14 economy, progression, stock market, and casino engine.</strong></p>
   <p>

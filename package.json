@@ -20,6 +20,7 @@
   },
   "files": [
     "dist",
+    "assets",
     "DOCUMENTATION.md",
     "CHANGELOG.md",
     "README.md",
