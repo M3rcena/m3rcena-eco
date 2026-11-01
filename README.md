@@ -5,8 +5,11 @@
     <a href="https://www.npmjs.com/package/@m3rcena/eco"><img src="https://img.shields.io/npm/v/@m3rcena/eco.svg?style=flat-square" alt="NPM Version" /></a>
     <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg?style=flat-square" alt="Node Support" /></a>
     <a href="https://github.com/M3rcena/m3rcena-eco/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square" alt="License" /></a>
+    <a href="https://github.com/M3rcena/m3rcena-weky/wiki/Eco-Overview"><img src="https://img.shields.io/badge/Wiki-Documentation-purple.svg?style=flat-square" alt="Wiki Documentation" /></a>
   </p>
 </div>
+
+> 📚 **Complete Documentation Wiki**: For detailed guides, bank vaults, credit score formulas, tax rates, and API reference, visit the **[M3rcena Official Wiki](https://github.com/M3rcena/m3rcena-weky/wiki/Eco-Overview)**.
 
 ---
 

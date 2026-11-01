@@ -1,5 +1,12 @@
 # @m3rcena/eco Documentation
 
+> 📚 **Official GitHub Wiki**: Complete guides, real economy tutorials, and API references are organized in the **[M3rcena Official Wiki](https://github.com/M3rcena/m3rcena-weky/wiki)**:
+> - **[Eco Overview](https://github.com/M3rcena/m3rcena-weky/wiki/Eco-Overview)**
+> - **[Real Economy: Bank Vaults, Loans, Bills & Taxes](https://github.com/M3rcena/m3rcena-weky/wiki/Eco-Real-Economy)**
+> - **[Careers, Jobs, Shop & Businesses](https://github.com/M3rcena/m3rcena-weky/wiki/Eco-Careers-Shop-and-Businesses)**
+> - **[Casino & Gambling Suite](https://github.com/M3rcena/m3rcena-weky/wiki/Eco-Casino-and-Gambling)**
+> - **[Stocks, Heists, Pets & Loot Crates](https://github.com/M3rcena/m3rcena-weky/wiki/Eco-Stocks-Heists-and-Pets)**
+
 The ultimate enterprise-grade Discord.js v14 economy, progression, and casino engine.
 
 ---

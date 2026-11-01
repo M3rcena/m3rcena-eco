@@ -175,3 +175,4 @@ export class EcoVaultUI extends EcoBaseUI {
     return container;
   }
 }
+
