@@ -33,7 +33,7 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
-    "test": "tsx test/index.test.ts"
+    "test": "tsx test/index.test.ts && tsx test/database.test.ts"
   },
   "keywords": [
     "m3rcena",

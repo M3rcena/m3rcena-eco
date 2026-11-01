@@ -8,6 +8,9 @@
 
 export * from "./types.js";
 export * from "./storage/EcoStorage.js";
+export * from "./storage/SqliteEcoStorage.js";
+export * from "./storage/PrismaEcoStorage.js";
+export * from "./storage/EcoDatabaseHandler.js";
 export * from "./modules/BankManager.js";
 export * from "./modules/RewardManager.js";
 export * from "./modules/CareerManager.js";
@@ -39,3 +42,11 @@ export * from "./ui/EcoBillsUI.js";
 export * from "./bridge/EcoBridgeRouter.js";
 export * from "./EcoManager.js";
 export { M3rcenaBridge } from "@m3rcena/bridge";
+export {
+  boxConsole,
+  checkPackageUpdates,
+  compareSemver,
+  fetchLatestVersion,
+  stripAnsi,
+  ECO_VERSION,
+} from "./utils/Notifier.js";

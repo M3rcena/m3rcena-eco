@@ -22,6 +22,8 @@ import { LoanManager } from "./modules/LoanManager.js";
 import { TaxManager } from "./modules/TaxManager.js";
 import { EcoBridgeRouter } from "./bridge/EcoBridgeRouter.js";
 import { EcoStorageAdapter, MemoryEcoStorage, JsonEcoStorage } from "./storage/EcoStorage.js";
+import { resolveEcoStorage, EcoDatabaseHandler } from "./storage/EcoDatabaseHandler.js";
+import { checkPackageUpdates, ECO_VERSION } from "./utils/Notifier.js";
 import {
   EcoManagerOptions,
   UserAccount,
@@ -69,13 +71,14 @@ export class EcoManager {
   public vault: VaultManager;
   public loans: LoanManager;
   public taxes: TaxManager;
-  public router?: EcoBridgeRouter;
+  public router: EcoBridgeRouter;
 
   public currencySymbol: string;
   public currencyName: string;
   public embedColor?: any;
   public customMessages?: Partial<EcoCustomMessages>;
   public emojis?: Partial<EcoCustomEmojis>;
+  public notifyUpdates: boolean;
   private bridge?: any;
 
   constructor(options: EcoManagerOptions = {}) {
@@ -84,9 +87,15 @@ export class EcoManager {
     this.embedColor = options.embedColor ?? 0x5865f2;
     this.customMessages = options.customMessages;
     this.emojis = options.emojis;
+    this.notifyUpdates = options.notifyUpdates ?? true;
 
-    // 1. Storage
-    this.storage = options.storage ?? new MemoryEcoStorage();
+    // Terminal update notification check
+    if (this.notifyUpdates) {
+      checkPackageUpdates(ECO_VERSION, false).catch(() => {});
+    }
+
+    // 1. Storage / Database Handler
+    this.storage = resolveEcoStorage(options);
 
     // 2. Bank
     this.bank = new BankManager(this.storage, {

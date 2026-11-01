@@ -238,16 +238,69 @@ const final = await eco.blackjackStand(game.gameId);
 
 ---
 
-## Pluggable Storage Adapters
+## Pluggable Storage & Database Handlers
 
-### `JsonEcoStorage`
-Atomic, file-based persistence that survives bot restarts:
+`@m3rcena/eco` provides unified database configuration allowing you to choose between high-performance zero-dependency SQLite, Prisma ORM, JSON files, or in-memory storage with zero hassle.
+
+### 1. Zero-Config Local SQLite (`node:sqlite`)
+Node.js 22+ native SQLite with WAL mode, indexing, and transactional operations:
 ```typescript
-import { JsonEcoStorage } from "@m3rcena/eco";
-const storage = new JsonEcoStorage("./data/economy.json");
+import { EcoManager } from "@m3rcena/eco";
+
+const eco = new EcoManager({
+  database: "sqlite", // Automatically creates ./eco.sqlite with tables & indexes
+  // Or with custom path:
+  database: {
+    type: "sqlite",
+    path: "./data/economy.sqlite",
+  },
+});
 ```
 
-### Custom Database Adapters
+### 2. Prisma ORM Integration with Auto-Migration
+Pass your existing `PrismaClient` instance. If your database hasn't compiled models yet, `@m3rcena/eco` automatically creates the tables and executes queries seamlessly:
+```typescript
+import { PrismaClient } from "@prisma/client";
+import { EcoManager, applyPrismaEcoModel } from "@m3rcena/eco";
+
+const prisma = new PrismaClient();
+
+// Optional: Programmatically append EcoAccount model to your schema.prisma
+applyPrismaEcoModel();
+
+const eco = new EcoManager({
+  database: {
+    type: "prisma",
+    client: prisma,
+    autoMigrate: true, // Auto-creates table if not already migrated
+  },
+});
+```
+
+#### Prisma Schema Snippet (`schema.prisma`):
+```prisma
+model EcoAccount {
+  userId    String
+  guildId   String   @default("")
+  wallet    Float    @default(0)
+  bank      Float    @default(0)
+  level     Int      @default(1)
+  data      String   // Serialized JSON with inventory, businesses, stats, etc.
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, guildId])
+  @@index([guildId])
+}
+```
+
+### 3. File JSON Storage
+```typescript
+const eco = new EcoManager({
+  database: "json", // or database: { type: "json", path: "./data/eco.json" }
+});
+```
+
+### 4. Custom Database Adapters
 Implement `EcoStorageAdapter`:
 ```typescript
 import { EcoStorageAdapter, UserAccount } from "@m3rcena/eco";
@@ -255,6 +308,7 @@ import { EcoStorageAdapter, UserAccount } from "@m3rcena/eco";
 export class MongoEcoStorage implements EcoStorageAdapter {
   async getAccount(userId: string, guildId?: string): Promise<UserAccount | null> { /* ... */ }
   async saveAccount(account: UserAccount): Promise<void> { /* ... */ }
+  async getTopAccounts(sortBy: "netWorth" | "wallet" | "bank" | "level", limit?: number, guildId?: string): Promise<UserAccount[]> { /* ... */ }
   async getAllAccounts(guildId?: string): Promise<UserAccount[]> { /* ... */ }
 }
 ```

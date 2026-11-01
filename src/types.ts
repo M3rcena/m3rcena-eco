@@ -453,7 +453,11 @@ export interface EcoManagerOptions {
   bankInterestRate?: number; // e.g. 0.01 for 1% daily interest
   transactionFeePercentage?: number; // e.g. 0.02 for 2% transfer fee
   storage?: any;
+  /** Database configuration for SQLite or Prisma ("sqlite" | "prisma" | "json" | "memory") */
+  database?: EcoDatabaseConfig;
   bridge?: any; // M3rcenaBridge instance
+  /** Whether to log an update notification box in terminal if newer version is available. Default: true */
+  notifyUpdates?: boolean;
   customMessages?: Partial<EcoCustomMessages>;
   emojis?: Partial<EcoCustomEmojis>;
   stockMarketTickIntervalMs?: number; // default 60000 (1 min)
@@ -471,3 +475,25 @@ export interface EcoManagerOptions {
     rob?: number;
   };
 }
+
+export type EcoDatabaseConfig =
+  | "sqlite"
+  | "memory"
+  | "json"
+  | {
+      type: "sqlite";
+      path?: string;
+    }
+  | {
+      type: "prisma";
+      client: any;
+      model?: string;
+      autoMigrate?: boolean;
+    }
+  | {
+      type: "json";
+      path?: string;
+    }
+  | {
+      type: "memory";
+    };
