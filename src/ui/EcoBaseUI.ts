@@ -92,3 +92,4 @@ export abstract class EcoBaseUI<TOptions extends EcoBaseUIOptions = EcoBaseUIOpt
 
   public abstract start(): Promise<void>;
 }
+

@@ -124,3 +124,4 @@ export class RenderMarketChart {
     return canvas.toBuffer("image/png");
   }
 }
+

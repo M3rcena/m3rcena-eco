@@ -219,3 +219,4 @@ export class EcoShopUI extends EcoBaseUI<EcoShopUIOptions> {
     return container;
   }
 }
+
