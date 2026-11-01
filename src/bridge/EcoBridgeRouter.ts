@@ -105,9 +105,17 @@ export class EcoBridgeRouter implements BridgePackageRouter {
     // 6. POST /loans/repay - Repay Debt
     if (path === "/loans/repay" && method === "POST") {
       const { userId, loanId, amount, guildId } = req.body || {};
-      if (!userId || !loanId) return { status: 400, body: { error: "Missing userId or loanId" } };
+      if (!userId) return { status: 400, body: { error: "Missing userId" } };
 
-      const res = await this.eco.repayLoan(userId, loanId, amount || "all", guildId);
+      let targetLoanId = loanId;
+      if (!targetLoanId) {
+        const userLoans = await this.eco.getUserLoans(userId, guildId);
+        const active = userLoans.find((l) => l.status === "active");
+        if (active) targetLoanId = active.id;
+      }
+      if (!targetLoanId) return { status: 400, body: { error: "No active loan found to repay" } };
+
+      const res = await this.eco.repayLoan(userId, targetLoanId, amount || "all", guildId);
       return { status: res.success ? 200 : 400, body: res };
     }
 
