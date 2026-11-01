@@ -1,12 +1,12 @@
 # @m3rcena/eco Documentation
 
-> 📚 **Dedicated Documentation & Guides**: Complete architecture guides, real economy tutorials, and API references are organized in the dedicated **[Eco Docs](./docs/Home.md)**:
-> - **[Architecture & Storage](./docs/Architecture.md)**
-> - **[Real Economy: Bank Vaults, Loans, Bills & Taxes](./docs/Real-Economy.md)**
-> - **[Careers, Jobs, Shop & Businesses](./docs/Careers-and-Shop.md)**
-> - **[Casino & Gambling Suite](./docs/Casino-Suite.md)**
-> - **[Stocks, Heists, Pets & Loot Crates](./docs/Stocks-Heists-and-Pets.md)**
-> - **[Dashboard Bridge Integration](./docs/Bridge-Integration.md)**
+> 📚 **Official GitHub Wiki**: Complete architecture guides, real economy tutorials, and API references are organized in the dedicated **[@m3rcena/eco Official Wiki](https://github.com/M3rcena/m3rcena-eco/wiki)**:
+> - **[Architecture & Storage](https://github.com/M3rcena/m3rcena-eco/wiki/Architecture)**
+> - **[Real Economy: Bank Vaults, Loans, Bills & Taxes](https://github.com/M3rcena/m3rcena-eco/wiki/Real-Economy)**
+> - **[Careers, Jobs, Shop & Businesses](https://github.com/M3rcena/m3rcena-eco/wiki/Careers-and-Shop)**
+> - **[Casino & Gambling Suite](https://github.com/M3rcena/m3rcena-eco/wiki/Casino-Suite)**
+> - **[Stocks, Heists, Pets & Loot Crates](https://github.com/M3rcena/m3rcena-eco/wiki/Stocks-Heists-and-Pets)**
+> - **[Dashboard Bridge Integration](https://github.com/M3rcena/m3rcena-eco/wiki/Bridge-Integration)**
 
 The ultimate enterprise-grade Discord.js v14 economy, progression, and casino engine.
 

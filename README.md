@@ -5,16 +5,16 @@
     <a href="https://www.npmjs.com/package/@m3rcena/eco"><img src="https://img.shields.io/npm/v/@m3rcena/eco.svg?style=flat-square" alt="NPM Version" /></a>
     <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg?style=flat-square" alt="Node Support" /></a>
     <a href="https://github.com/M3rcena/m3rcena-eco/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square" alt="License" /></a>
-    <a href="./docs/Home.md"><img src="https://img.shields.io/badge/Docs-Documentation-purple.svg?style=flat-square" alt="Eco Documentation" /></a>
+    <a href="https://github.com/M3rcena/m3rcena-eco/wiki"><img src="https://img.shields.io/badge/Wiki-Documentation-purple.svg?style=flat-square" alt="Eco Wiki Documentation" /></a>
   </p>
 </div>
 
-> 📚 **Complete Documentation Guides**: For detailed guides, bank vaults, credit score formulas, tax rates, and API reference, explore the dedicated **[Eco Documentation](./docs/Home.md)**:
-> - **[Real Economy: Bank Vaults, Loans, Bills & Taxes](./docs/Real-Economy.md)**
-> - **[Careers, Jobs, Shop & Businesses](./docs/Careers-and-Shop.md)**
-> - **[Casino & Gambling Suite](./docs/Casino-Suite.md)**
-> - **[Stocks, Heists, Pets & Loot Crates](./docs/Stocks-Heists-and-Pets.md)**
-> - **[Dashboard Bridge Integration](./docs/Bridge-Integration.md)**
+> 📚 **Complete Documentation Wiki**: For detailed guides, bank vaults, credit score formulas, tax rates, and API reference, visit the **[@m3rcena/eco Official Wiki](https://github.com/M3rcena/m3rcena-eco/wiki)**:
+> - **[Real Economy: Bank Vaults, Loans, Bills & Taxes](https://github.com/M3rcena/m3rcena-eco/wiki/Real-Economy)**
+> - **[Careers, Jobs, Shop & Businesses](https://github.com/M3rcena/m3rcena-eco/wiki/Careers-and-Shop)**
+> - **[Casino & Gambling Suite](https://github.com/M3rcena/m3rcena-eco/wiki/Casino-Suite)**
+> - **[Stocks, Heists, Pets & Loot Crates](https://github.com/M3rcena/m3rcena-eco/wiki/Stocks-Heists-and-Pets)**
+> - **[Dashboard Bridge Integration](https://github.com/M3rcena/m3rcena-eco/wiki/Bridge-Integration)**
 
 ---
 
