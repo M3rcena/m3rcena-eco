@@ -213,10 +213,10 @@ export class EcoBridgeRouter implements BridgePackageRouter {
 
     // 12. GET /cards/chart/:symbol - Visual Market Chart Buffer
     if (path.startsWith("/cards/chart/") && method === "GET") {
-      const symbol = path.replace("/cards/chart/", "").split("/")[0].toUpperCase();
-      const stock = this.eco.getStock(symbol);
+      const rawSymbol = decodeURIComponent(path.replace("/cards/chart/", "").split("/")[0]).toUpperCase();
+      const stock = this.eco.getStock(rawSymbol) || this.eco.getStock(`$${rawSymbol.replace(/^\$/, "")}`);
       if (!stock) {
-        return { status: 404, body: { error: `Stock symbol "${symbol}" not found.` } };
+        return { status: 404, body: { error: `Stock symbol "${rawSymbol}" not found.` } };
       }
 
       try {
