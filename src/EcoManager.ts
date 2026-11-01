@@ -144,18 +144,40 @@ export class EcoManager {
   }
 
   /**
+   * Universal router getter for @m3rcena/bridge mounting.
+   */
+  public toBridgeRouter(): EcoBridgeRouter {
+    return this.router;
+  }
+
+  /**
+   * Connects this economy instance with an M3rcenaBridge controller.
+   * Enables: eco.connectBridge(bridge) or bridge.use(eco).
+   */
+  public connectBridge(bridge: any): this {
+    return this.setBridge(bridge);
+  }
+
+  /**
    * Connects this economy instance with @m3rcena/bridge for live web dashboard streaming.
    */
-  public setBridge(bridge: any): void {
+  public setBridge(bridge: any): this {
     this.bridge = bridge;
 
     if (this.bridge && typeof this.bridge.registerModule === "function") {
-      this.bridge.registerModule("economy");
+      this.bridge.registerModule("economy", async (action: any) => {
+        if (this.router && typeof this.router.handleAction === "function") {
+          return this.router.handleAction(action);
+        }
+        return { success: true };
+      });
     }
 
     if (this.bridge && typeof this.bridge.mountPackage === "function" && this.router) {
       this.bridge.mountPackage(this.router);
     }
+
+    return this;
   }
 
   /**

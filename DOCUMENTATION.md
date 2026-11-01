@@ -273,7 +273,14 @@ const bridge = new M3rcenaBridge({
   requireOnlinePresenceForAudio: true, // Audio cues only play when user has the dashboard open!
 });
 
+// Pattern A: Pass bridge into constructor options
 const eco = new EcoManager({ bridge });
+
+// Pattern B: Or mount directly with fluent bridge.use()
+// bridge.use(eco);
+
+// Pattern C: Or via connection handshake method
+// eco.connectBridge(bridge);
 ```
 
 ### Real-Time Dispatched Events

@@ -548,6 +548,18 @@ describe("EcoManager Dashboard Bridge Integration", () => {
     const purchaseSound = capturedAudioCues.find((c) => c.sound === "purchase");
     assert.ok(purchaseSound);
   });
+
+  test("supports fluent bridge.use(eco) and eco.connectBridge(bridge)", () => {
+    const standaloneBridge = new M3rcenaBridge();
+    const standaloneEco = new EcoManager();
+
+    standaloneBridge.use(standaloneEco);
+    assert.ok(standaloneBridge.getMountedRouters().some((r) => r.basePath === "/api/eco"));
+
+    const secondBridge = new M3rcenaBridge();
+    standaloneEco.connectBridge(secondBridge);
+    assert.ok(secondBridge.getMountedRouters().some((r) => r.basePath === "/api/eco"));
+  });
 });
 
 describe("EcoManager Stock & Crypto Market Exchange", () => {
