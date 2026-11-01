@@ -1,255 +1,224 @@
-# @m3rcena/eco Documentation
+# 📖 @m3rcena/eco Comprehensive API Documentation
 
-> 📚 **Official GitHub Wiki**: Complete architecture guides, real economy tutorials, and API references are organized in the dedicated **[@m3rcena/eco Official Wiki](https://github.com/M3rcena/m3rcena-eco/wiki)**:
-> - **[Architecture & Storage](https://github.com/M3rcena/m3rcena-eco/wiki/Architecture)**
+> 📚 **Official GitHub Wiki**: The full, categorized documentation, tutorials, and deep-dive guides are organized in the **[M3rcena Eco Official Wiki](https://github.com/M3rcena/m3rcena-eco/wiki)**:
+> - **[Architecture & Database Handlers](https://github.com/M3rcena/m3rcena-eco/wiki/Architecture)**
 > - **[Real Economy: Bank Vaults, Loans, Bills & Taxes](https://github.com/M3rcena/m3rcena-eco/wiki/Real-Economy)**
 > - **[Careers, Jobs, Shop & Businesses](https://github.com/M3rcena/m3rcena-eco/wiki/Careers-and-Shop)**
 > - **[Casino & Gambling Suite](https://github.com/M3rcena/m3rcena-eco/wiki/Casino-Suite)**
 > - **[Stocks, Heists, Pets & Loot Crates](https://github.com/M3rcena/m3rcena-eco/wiki/Stocks-Heists-and-Pets)**
 > - **[Dashboard Bridge Integration](https://github.com/M3rcena/m3rcena-eco/wiki/Bridge-Integration)**
 
-The ultimate enterprise-grade Discord.js v14 economy, progression, and casino engine.
+Welcome to the definitive documentation for **`@m3rcena/eco`** (v14.28.0) — the ultimate enterprise-grade Discord.js v14 economy, progression, career, stock market, and casino engine.
 
 ---
 
-## Table of Contents
-1. [Overview & Architecture](#overview--architecture)
-2. [Installation & Requirements](#installation--requirements)
-3. [Quickstart Example](#quickstart-example)
-4. [EcoManager API Reference](#ecomanager-api-reference)
-5. [Banking & Dual-Currency System](#banking--dual-currency-system)
-6. [Daily Streaks, Work, Crime & Robbery](#daily-streaks-work-crime--robbery)
-7. [Career Progression & Jobs](#career-progression--jobs)
-8. [Shop, Inventory & Consumable Buffs](#shop-inventory--consumable-buffs)
-9. [Passive Business Investment](#passive-business-investment)
-10. [Casino & High-Stakes Gambling Suite](#casino--high-stakes-gambling-suite)
-11. [Leaderboards & Net Worth](#leaderboards--net-worth)
-12. [Pluggable Storage Adapters](#pluggable-storage-adapters)
-13. [Web Dashboard Bridge Integration (@m3rcena/bridge)](#web-dashboard-bridge-integration-m3rcenabridge)
+## 📑 Table of Contents
+
+1. [Architecture & Design Principles](#1-architecture--design-principles)
+2. [Installation & Requirements](#2-installation--requirements)
+3. [Quickstart Setup](#3-quickstart-setup)
+4. [The Central Engine: `EcoManager`](#4-the-central-engine-ecomanager)
+5. [Database Handlers & Persistence Layer](#5-database-handlers--persistence-layer)
+   - [5.1. Zero-Config Local SQLite (`node:sqlite`)](#51-zero-config-local-sqlite-nodesqlite)
+   - [5.2. Enterprise Prisma ORM Integration](#52-enterprise-prisma-orm-integration)
+   - [5.3. Manual Prisma Migration Tables (PostgreSQL, MySQL, SQLite)](#53-manual-prisma-migration-tables)
+   - [5.4. JSON File Storage (`JsonEcoStorage`)](#54-json-file-storage-jsonecostorage)
+   - [5.5. In-Memory Ephemeral Storage (`MemoryEcoStorage`)](#55-in-memory-ephemeral-storage-memoryecostorage)
+   - [5.6. Custom Database Adapters (`EcoStorageAdapter`)](#56-custom-database-adapters-ecostorageadapter)
+6. [Core Banking & Dual-Currency System (`BankManager`)](#6-core-banking--dual-currency-system-bankmanager)
+7. [Daily Streaks, Work, Crime & Robbery (`RewardManager`)](#7-daily-streaks-work-crime--robbery-rewardmanager)
+8. [Career Progression & Jobs (`CareerManager`)](#8-career-progression--jobs-careermanager)
+9. [Shop, Inventory & Consumable Buffs (`ShopManager`)](#9-shop-inventory--consumable-buffs-shopmanager)
+10. [Passive Business Investment (`BusinessManager`)](#10-passive-business-investment-businessmanager)
+11. [Casino & High-Stakes Gambling Suite (`CasinoManager`)](#11-casino--high-stakes-gambling-suite-casinomanager)
+    - [11.1. Coinflip (`coinflip`)](#111-coinflip)
+    - [11.2. Dice Roll (`dice`)](#112-dice-roll)
+    - [11.3. Slot Machine (`slots`)](#113-slot-machine)
+    - [11.4. European Roulette (`roulette`)](#114-european-roulette)
+    - [11.5. Crash Multiplier (`crash`)](#115-crash-multiplier)
+    - [11.6. Blackjack Table (`blackjack`)](#116-blackjack-table)
+12. [Simulated Stock & Crypto Exchange (`StockMarketManager`)](#12-simulated-stock--crypto-exchange-stockmarketmanager)
+13. [Multiplayer Syndicate Heists (`HeistManager`)](#13-multiplayer-syndicate-heists-heistmanager)
+14. [Companion Pets & Foraging (`PetManager`)](#14-companion-pets--foraging-petmanager)
+15. [Mystery Loot Crates (`CrateManager`)](#15-mystery-loot-crates-cratemanager)
+16. [Real Economy: Bank Vaults & Compound Interest (`VaultManager`)](#16-real-economy-bank-vaults--compound-interest-vaultmanager)
+17. [Real Economy: Credit Score, Loans & Debt (`LoanManager`)](#17-real-economy-credit-score-loans--debt-loanmanager)
+18. [Real Economy: Municipal Bills, Taxes & Audits (`TaxManager`)](#18-real-economy-municipal-bills-taxes--audits-taxmanager)
+19. [Interactive Discord Components V2 UI Suite](#19-interactive-discord-components-v2-ui-suite)
+20. [High-Resolution Canvas Card Renderers](#20-high-resolution-canvas-card-renderers)
+21. [Cross-Platform Bridge Integration (`EcoBridgeRouter`)](#21-cross-platform-bridge-integration-ecobridgerouter)
+22. [Complete TypeScript Types Reference](#22-complete-typescript-types-reference)
 
 ---
 
-## Overview & Architecture
+## 1. Architecture & Design Principles
 
-`@m3rcena/eco` provides a comprehensive, feature-complete economy system designed for modern Discord.js bots. It splits functionality into dedicated, high-performance managers while offering a clean, unified top-level API through `EcoManager`.
+`@m3rcena/eco` is built with a modular, decoupled architecture where each financial domain is encapsulated within a dedicated manager class. All managers interact with the unified storage adapter to ensure atomic state updates and consistent user accounts.
 
 ```
-                  ┌─────────────────────────────────────────┐
-                  │               EcoManager                │
-                  └────┬──────┬──────┬──────┬──────┬────┬───┘
-                       │      │      │      │      │    │
-       ┌───────────────┘      │      │      │      │    └────────────────┐
-       ▼                      ▼      ▼      ▼      ▼                     ▼
-┌─────────────┐  ┌───────────────┐ ┌───────────────┐ ┌────────────────┐ ┌────────────────┐
-│ BankManager │  │ RewardManager │ │ CareerManager │ │ BusinessManager│ │ CasinoManager  │
-└─────────────┘  └───────────────┘ └───────────────┘ └────────────────┘ └────────────────┘
-       │                      │            │               │                    │
-       └──────────────────────┴────────────┼───────────────┴────────────────────┘
-                                           ▼
-                                 ┌───────────────────┐
-                                 │ EcoStorageAdapter │
-                                 │ (Memory / JSON)   │
-                                 └───────────────────┘
+                              ┌───────────────────────────────────────────────┐
+                              │                  EcoManager                   │
+                              └───────────────────────┬───────────────────────┘
+                                                      │
+         ┌───────────────────┬────────────────────────┼────────────────────────┬───────────────────┐
+         │                   │                        │                        │                   │
+         ▼                   ▼                        ▼                        ▼                   ▼
+  ┌─────────────┐     ┌───────────────┐        ┌───────────────┐        ┌───────────────┐   ┌───────────────┐
+  │ BankManager │     │ RewardManager │        │ CareerManager │        │  ShopManager  │   │BusinessManager│
+  └──────┬──────┘     └───────┬───────┘        └───────┬───────┘        └───────┬───────┘   └───────┬───────┘
+         │                   │                        │                        │                   │
+         ├───────────────────┼────────────────────────┼────────────────────────┼───────────────────┤
+         ▼                   ▼                        ▼                        ▼                   ▼
+  ┌─────────────┐     ┌───────────────┐        ┌───────────────┐        ┌───────────────┐   ┌───────────────┐
+  │CasinoManager│     │StockMarketMgr │        │ HeistManager  │        │  PetManager   │   │ CrateManager  │
+  └──────┬──────┘     └───────┬───────┘        └───────┬───────┘        └───────┬───────┘   └───────┬───────┘
+         │                   │                        │                        │                   │
+         ├───────────────────┼────────────────────────┼────────────────────────┼───────────────────┤
+         ▼                   ▼                        ▼                        ▼                   ▼
+  ┌─────────────┐     ┌───────────────┐        ┌───────────────┐        ┌───────────────┐   ┌───────────────┐
+  │VaultManager │     │  LoanManager  │        │  TaxManager   │        │LeaderboardMgr │   │EcoBridgeRouter│
+  └──────┬──────┘     └───────┬───────┘        └───────┬───────┘        └───────┬───────┘   └───────┬───────┘
+         │                   │                        │                        │                   │
+         └───────────────────┴────────────────────────┼────────────────────────┴───────────────────┘
+                                                      ▼
+                                       ┌─────────────────────────────┐
+                                       │      EcoStorageAdapter      │
+                                       │   (SQLite / Prisma / JSON)  │
+                                       └─────────────────────────────┘
 ```
+
+- **Dual-Currency Balance**: Cash on hand (Wallet) and protected funds (Bank).
+- **Zero-Dependency Native SQLite**: Native `node:sqlite` storage for zero-hassle local databases.
+- **Enterprise Prisma ORM**: Auto-migrating Prisma storage with direct delegates or raw SQL fallback.
+- **Components V2 Powered**: Uses Discord's modern `flags: 32768` (Components V2) container structures.
+- **Cross-Platform Bridge Ready**: Plugs into `@m3rcena/bridge` via `bridge.use(eco)` with live REST API and WebSocket events.
 
 ---
 
-## Installation & Requirements
-
-- **Node.js**: `^22.0.0`, `^24.0.0`, or `^26.0.0` (Node 20 is EOL and unsupported).
-- **Discord.js**: `^14.0.0`.
+## 2. Installation & Requirements
 
 ```bash
 npm install @m3rcena/eco @m3rcena/bridge discord.js
 ```
 
+### System Requirements
+- **Node.js**: `>= 22.0.0` (Node 22, 24, or 26 recommended; supports native `node:sqlite`).
+- **Discord.js**: `^14.0.0`.
+- **Canvas (Optional)**: `@napi-rs/canvas` is bundled automatically for debit cards and stock charts.
+
 ---
 
-## Quickstart Example
+## 3. Quickstart Setup
 
 ```typescript
 import { Client, GatewayIntentBits } from "discord.js";
-import { EcoManager, JsonEcoStorage } from "@m3rcena/eco";
+import { EcoManager, EcoProfileUI, EcoShopUI, EcoStockMarketUI } from "@m3rcena/eco";
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
 
-// Initialize persistent economy engine
-const eco = new EcoManager({
+// Initialize EcoManager with native SQLite
+export const eco = new EcoManager({
   currencySymbol: "🪙",
   currencyName: "Coins",
-  defaultWalletBalance: 1000,
-  defaultBankCapacity: 15000,
-  storage: new JsonEcoStorage("./data/economy.json"),
+  embedColor: "#F1C40F",
+  database: "sqlite", // Zero configuration! Auto-creates ./eco.sqlite
 });
 
-client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
 
-  const { commandName, user } = interaction;
-
-  if (commandName === "balance") {
-    const bal = await eco.getBalance(user.id);
-    return interaction.reply({
-      content: `💰 **${user.username}'s Finances**\n• Wallet: 🪙 ${bal.wallet.toLocaleString()}\n• Bank: 🪙 ${bal.bank.toLocaleString()} / ${bal.bankCapacity.toLocaleString()}\n• Net Worth: 🪙 ${bal.netWorth.toLocaleString()}`,
-    });
+  // 1. Balance Check
+  if (message.content === "!balance") {
+    const bal = await eco.getBalance(message.author.id, message.guildId ?? undefined);
+    return message.reply(`💰 Wallet: 🪙 ${bal.wallet.toLocaleString()} | Bank: 🪙 ${bal.bank.toLocaleString()} / ${bal.bankCapacity.toLocaleString()}`);
   }
 
-  if (commandName === "daily") {
-    const res = await eco.daily(user.id);
-    if (!res.success) {
-      const mins = Math.ceil(res.remainingMs! / 60000);
-      return interaction.reply(`⏳ You've already claimed today! Check back in ${mins} minutes.`);
-    }
-    return interaction.reply(`🎉 Claimed daily reward: **🪙 ${res.amount.toLocaleString()}**! Daily streak: **${res.streak} days** 🔥`);
+  // 2. Daily Reward
+  if (message.content === "!daily") {
+    const res = await eco.daily(message.author.id, message.guildId ?? undefined);
+    if (!res.success) return message.reply(`⏳ Cooldown! Try again in ${Math.ceil((res.cooldownRemainingMs ?? 0) / 60000)}m.`);
+    return message.reply(`🎉 Claimed 🪙 ${res.amount.toLocaleString()}! Daily Streak: ${res.streak} 🔥`);
+  }
+
+  // 3. Interactive Components V2 Passport Profile
+  if (message.content === "!profile") {
+    return new EcoProfileUI(eco, { context: message }).start();
+  }
+
+  // 4. Interactive Components V2 Shop
+  if (message.content === "!shop") {
+    return new EcoShopUI(eco, { context: message }).start();
   }
 });
 
-client.login(process.env.DISCORD_TOKEN);
+client.login("YOUR_BOT_TOKEN");
 ```
 
 ---
 
-## EcoManager API Reference
+## 4. The Central Engine: `EcoManager`
 
-### Constructor Options
+`EcoManager` is the unified orchestrator exposing high-level helper functions for all underlying modules.
+
+### Options (`EcoManagerOptions`)
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `currencySymbol` | `string` | `"🪙"` | Prefix symbol displayed across cards and messages. |
+| `currencyName` | `string` | `"Coins"` | Plural name of the currency. |
+| `embedColor` | `any` | `0x5865f2` | Primary embed accent color (Hex string or number). |
+| `mode` | `"guild" \| "global"` | `"guild"` | Scoping mode for user accounts and leaderboards. |
+| `defaultWalletBalance` | `number` | `500` | Starting cash granted to new accounts. |
+| `defaultBankCapacity` | `number` | `10000` | Starting maximum bank deposit ceiling. |
+| `bankInterestRate` | `number` | `0.01` | Daily interest multiplier on bank holdings (1%). |
+| `transactionFeePercentage` | `number` | `0` | Fee percentage deducted on player transfers (e.g. `0.02` for 2%). |
+| `database` | `EcoDatabaseConfig` | `"memory"` | Database storage configuration (`"sqlite"`, `"prisma"`, `"json"`, or object). |
+| `storage` | `EcoStorageAdapter` | `MemoryEcoStorage` | Custom storage adapter instance. |
+| `bridge` | `M3rcenaBridge` | `undefined` | Active `@m3rcena/bridge` instance for web dashboard synchronization. |
+| `notifyUpdates` | `boolean` | `true` | Log styled update notification box when a newer version is on npm. |
+| `stockMarketTickIntervalMs` | `number` | `60000` | Milliseconds between simulated market price fluctuations. |
+| `initialStocks` | `StockConfig[]` | `DEFAULT_STOCKS` | Custom initial stock and crypto assets. |
+| `initialHeistTargets` | `HeistTarget[]` | `DEFAULT_HEIST_TARGETS` | Custom heist target vaults. |
+| `initialPets` | `PetConfig[]` | `DEFAULT_PETS` | Custom companion pets catalog. |
+| `cooldowns` | `object` | *See below* | Cooldown duration overrides in milliseconds. |
+
+---
+
+## 5. Database Handlers & Persistence Layer
+
+`@m3rcena/eco` features a zero-friction database system. Developers can choose between native SQLite, Prisma ORM, JSON files, or memory storage via the `database` configuration.
 
 ```typescript
-export interface EcoManagerOptions {
-  currencySymbol?: string;          // Default: "🪙"
-  currencyName?: string;            // Default: "Coins"
-  defaultBankCapacity?: number;     // Default: 10,000
-  defaultWalletBalance?: number;    // Default: 500
-  bankInterestRate?: number;        // Default: 0
-  transactionFeePercentage?: number;// e.g. 0.05 for 5% transfer fee
-  storage?: EcoStorageAdapter;      // Default: MemoryEcoStorage
-  bridge?: M3rcenaBridge;           // Optional dashboard bridge
-  cooldowns?: {
-    daily?: number;                 // Default: 24h
-    weekly?: number;                // Default: 7d
-    monthly?: number;               // Default: 30d
-    hourly?: number;                // Default: 1h
-    work?: number;                  // Default: 30m
-    beg?: number;                   // Default: 5m
-    crime?: number;                 // Default: 45m
-    rob?: number;                   // Default: 2h
-  };
-}
+export type EcoDatabaseConfig =
+  | "sqlite"
+  | "memory"
+  | "json"
+  | { type: "sqlite"; path?: string }
+  | { type: "prisma"; client: any; model?: string; autoMigrate?: boolean }
+  | { type: "json"; path?: string }
+  | { type: "memory" };
 ```
 
 ---
 
-## Banking & Dual-Currency System
+### 5.1. Zero-Config Local SQLite (`node:sqlite`)
 
-The dual-currency model safeguards user funds against robbery while rewarding bank capacity upgrades.
+Uses Node.js `>= 22.0.0` built-in `node:sqlite` (`DatabaseSync`). Zero npm compilation, zero C++ build tools, instant startup, WAL mode enabled by default, and indexed queries.
 
-### Methods
-- `eco.getBalance(userId, guildId?)`: Returns `{ wallet, bank, bankCapacity, netWorth }`.
-- `eco.deposit(userId, amount | "all", guildId?)`: Deposits wallet funds into bank up to capacity.
-- `eco.withdraw(userId, amount | "all", guildId?)`: Withdraws bank funds into wallet.
-- `eco.transfer(fromUserId, toUserId, amount, guildId?)`: Transfers cash between players with percentage fees.
-- `eco.addWallet(userId, amount, guildId?)`: Directly awards wallet funds.
-- `eco.removeWallet(userId, amount, guildId?)`: Directly removes wallet funds.
-
----
-
-## Daily Streaks, Work, Crime & Robbery
-
-### Daily Streaks & Jackpots
-- Daily reward increases by +100 coins per streak day.
-- Every 7-day milestone triggers a **2x Jackpot Bonus**!
-
-### Work Shifts & XP Progression
-- `eco.work(userId, guildId?)`: Awards wages + experience points (XP). Automatically increases level and bank capacity.
-
-### High-Risk Crimes & Robbery
-- `eco.crime(userId, guildId?)`: 55% success rate for high payouts, 45% fail rate resulting in bail fines.
-- `eco.rob(robberId, victimId, guildId?)`: Steals 20%-60% of victim's wallet. If the victim has an active **Titanium Padlock Shield**, the robbery is blocked, the shield is consumed, and the robber is fined!
-
----
-
-## Career Progression & Jobs
-
-Users can build a career path with promotions and higher salaries.
-
-### Default Careers Catalog
-| Job ID | Title | Min Level | Base Salary | Shifts for Promotion |
-|--------|-------|-----------|-------------|----------------------|
-| `intern` | Junior Intern | Level 1 | 🪙 250 | 3 shifts |
-| `barista` | Artisan Barista | Level 2 | 🪙 500 | 5 shifts |
-| `software_engineer` | Full-Stack Developer | Level 5 | 🪙 1,400 | 8 shifts |
-| `data_scientist` | AI & Data Scientist | Level 10 | 🪙 3,000 | 12 shifts |
-| `investment_banker` | Wall Street Banker | Level 15 | 🪙 6,500 | 15 shifts |
-| `cyber_syndicate_lead` | Syndicate Boss | Level 20 | 🪙 12,500 | 20 shifts |
-
----
-
-## Shop, Inventory & Consumable Buffs
-
-### Default Shop Catalog
-- **Titanium Padlock** (`padlock`): Blocks the next robbery attempt. Lasts 24 hours.
-- **Cyber Caffeine Overdrive** (`energy_drink`): Instantly resets work shift cooldown.
-- **Enchanted Gold Coin** (`lucky_coin`): Boosts casino winning probability for 1 hour.
-- **Elixir of Knowledge** (`xp_potion`): 2x XP boost for 2 hours.
-- **Swiss Vault Key** (`bank_vault_key`): Permanently expands bank capacity by +25,000.
-- **Mega Millions Scratch Ticket** (`lottery_ticket`): Instant scratch-off for up to 50,000 jackpot.
-- **Rolex Submariner Gold** (`gold_watch`): High-value luxury collectible.
-
----
-
-## Passive Business Investment
-
-Players can purchase and upgrade passive revenue streams that accumulate profits even while offline.
-
-### Business Catalog
-1. **Artisanal Lemonade Stand** (Base Cost: 🪙 3,000 | Base Hourly: 🪙 200)
-2. **Urban Espresso Lounge** (Base Cost: 🪙 12,500 | Base Hourly: 🪙 950)
-3. **AI SaaS Enterprise** (Base Cost: 🪙 65,000 | Base Hourly: 🪙 5,200)
-4. **Geothermal Crypto Mine** (Base Cost: 🪙 280,000 | Base Hourly: 🪙 24,000)
-5. **Orbital Cargo Logistics** (Base Cost: 🪙 1,500,000 | Base Hourly: 🪙 150,000)
-
----
-
-## Casino & High-Stakes Gambling Suite
-
-### 1. Interactive Blackjack
-Complete casino Blackjack engine with soft Aces, split decks, dealer drawing on soft 17, and natural 3:2 blackjack payouts.
-```typescript
-const game = await eco.startBlackjack(userId, 500);
-// Player chooses to hit
-const updated = await eco.blackjackHit(game.gameId);
-// Or player stands
-const final = await eco.blackjackStand(game.gameId);
-```
-
-### 2. Coinflip
-`eco.coinflip(userId, amount, "heads" | "tails")` -> 2x payout on win.
-
-### 3. Dice
-`eco.dice(userId, amount, "high" | "low" | 1..6)` -> 2x on high/low, 6x on exact roll.
-
-### 4. Slots
-`eco.slots(userId, amount)` -> Multipliers up to 50x for Triple 7s.
-
-### 5. Roulette
-`eco.roulette(userId, amount, "red" | "black" | "green" | "even" | "odd" | 0..36)`.
-
-### 6. Crash
-`eco.crash(userId, amount, targetMultiplier)` -> Cash out before the rocket explodes.
-
----
-
-## Pluggable Storage & Database Handlers
-
-`@m3rcena/eco` provides unified database configuration allowing you to choose between high-performance zero-dependency SQLite, Prisma ORM, JSON files, or in-memory storage with zero hassle.
-
-### 1. Zero-Config Local SQLite (`node:sqlite`)
-Node.js 22+ native SQLite with WAL mode, indexing, and transactional operations:
 ```typescript
 import { EcoManager } from "@m3rcena/eco";
 
 const eco = new EcoManager({
-  database: "sqlite", // Automatically creates ./eco.sqlite with tables & indexes
-  // Or with custom path:
+  // Auto-creates ./eco.sqlite with tables & indexes
+  database: "sqlite",
+
+  // Or with custom directory:
   database: {
     type: "sqlite",
     path: "./data/economy.sqlite",
@@ -257,25 +226,35 @@ const eco = new EcoManager({
 });
 ```
 
-### 2. Prisma ORM Integration with Auto-Migration
-Pass your existing `PrismaClient` instance. If your database hasn't compiled models yet, `@m3rcena/eco` automatically creates the tables and executes queries seamlessly:
+---
+
+### 5.2. Enterprise Prisma ORM Integration
+
+Pass an existing `PrismaClient` instance. If your database hasn't compiled the `EcoAccount` delegate, `@m3rcena/eco` automatically runs DDL creation and executes queries via raw SQL:
+
 ```typescript
 import { PrismaClient } from "@prisma/client";
 import { EcoManager, applyPrismaEcoModel } from "@m3rcena/eco";
 
 const prisma = new PrismaClient();
 
-// Optional: Programmatically append EcoAccount model to your schema.prisma
+// Optional: Automatically appends `model EcoAccount` to schema.prisma if missing:
 applyPrismaEcoModel();
 
 const eco = new EcoManager({
   database: {
     type: "prisma",
     client: prisma,
-    autoMigrate: true, // Auto-creates table if not already migrated
+    autoMigrate: true, // Auto-creates table if missing
   },
 });
 ```
+
+---
+
+### 5.3. Manual Prisma Migration Tables
+
+If you prefer to manage database schemas manually or with `npx prisma migrate dev`, use the schema snippet below:
 
 #### Prisma Schema Snippet (`schema.prisma`):
 ```prisma
@@ -285,63 +264,574 @@ model EcoAccount {
   wallet    Float    @default(0)
   bank      Float    @default(0)
   level     Int      @default(1)
-  data      String   // Serialized JSON with inventory, businesses, stats, etc.
+  data      String   // Complete JSON payload of account state (inventory, businesses, etc.)
   updatedAt DateTime @updatedAt
 
   @@id([userId, guildId])
   @@index([guildId])
+  @@index([wallet, bank])
 }
 ```
 
-### 3. File JSON Storage
+#### PostgreSQL Manual Migration SQL:
+```sql
+CREATE TABLE IF NOT EXISTS "EcoAccount" (
+  "userId" VARCHAR(191) NOT NULL,
+  "guildId" VARCHAR(191) NOT NULL DEFAULT '',
+  "wallet" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  "bank" DOUBLE PRECISION NOT NULL DEFAULT 0,
+  "level" INTEGER NOT NULL DEFAULT 1,
+  "data" TEXT NOT NULL,
+  "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY ("userId", "guildId")
+);
+
+CREATE INDEX IF NOT EXISTS idx_eco_guild ON "EcoAccount" ("guildId");
+CREATE INDEX IF NOT EXISTS idx_eco_networth ON "EcoAccount" ("wallet", "bank");
+```
+
+#### MySQL Manual Migration SQL:
+```sql
+CREATE TABLE IF NOT EXISTS `EcoAccount` (
+  `userId` VARCHAR(191) NOT NULL,
+  `guildId` VARCHAR(191) NOT NULL DEFAULT '',
+  `wallet` DOUBLE NOT NULL DEFAULT 0,
+  `bank` DOUBLE NOT NULL DEFAULT 0,
+  `level` INT NOT NULL DEFAULT 1,
+  `data` LONGTEXT NOT NULL,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`userId`, `guildId`),
+  INDEX idx_eco_guild (`guildId`),
+  INDEX idx_eco_networth (`wallet`, `bank`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+#### SQLite Manual Migration SQL:
+```sql
+CREATE TABLE IF NOT EXISTS eco_accounts (
+  user_id TEXT NOT NULL,
+  guild_id TEXT NOT NULL DEFAULT '',
+  wallet REAL NOT NULL DEFAULT 0,
+  bank REAL NOT NULL DEFAULT 0,
+  level INTEGER NOT NULL DEFAULT 1,
+  data TEXT NOT NULL,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, guild_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_eco_guild ON eco_accounts (guild_id);
+CREATE INDEX IF NOT EXISTS idx_eco_networth ON eco_accounts (wallet + bank DESC);
+```
+
+---
+
+### 5.4. JSON File Storage (`JsonEcoStorage`)
+
 ```typescript
 const eco = new EcoManager({
-  database: "json", // or database: { type: "json", path: "./data/eco.json" }
+  database: "json", // Defaults to ./eco-data.json
+  // Or:
+  database: {
+    type: "json",
+    path: "./data/economy.json",
+  },
 });
 ```
 
-### 4. Custom Database Adapters
-Implement `EcoStorageAdapter`:
+---
+
+### 5.5. In-Memory Ephemeral Storage (`MemoryEcoStorage`)
+
+Ideal for unit testing or ephemeral Discord bots with zero disk I/O:
+
+```typescript
+const eco = new EcoManager({
+  database: "memory",
+});
+```
+
+---
+
+### 5.6. Custom Database Adapters (`EcoStorageAdapter`)
+
+Implement the `EcoStorageAdapter` interface for MongoDB, DynamoDB, or Redis:
+
 ```typescript
 import { EcoStorageAdapter, UserAccount } from "@m3rcena/eco";
 
-export class MongoEcoStorage implements EcoStorageAdapter {
-  async getAccount(userId: string, guildId?: string): Promise<UserAccount | null> { /* ... */ }
-  async saveAccount(account: UserAccount): Promise<void> { /* ... */ }
-  async getTopAccounts(sortBy: "netWorth" | "wallet" | "bank" | "level", limit?: number, guildId?: string): Promise<UserAccount[]> { /* ... */ }
-  async getAllAccounts(guildId?: string): Promise<UserAccount[]> { /* ... */ }
+export class CustomMongoStorage implements EcoStorageAdapter {
+  async getAccount(userId: string, guildId?: string): Promise<UserAccount | null> {
+    // Return UserAccount or null
+  }
+  async saveAccount(account: UserAccount): Promise<void> {
+    // Persist account
+  }
+  async getTopAccounts(sortBy: "netWorth" | "wallet" | "bank" | "level", limit?: number, guildId?: string): Promise<UserAccount[]> {
+    // Return sorted accounts
+  }
+  async getAllAccounts(guildId?: string): Promise<UserAccount[]> {
+    // Return all accounts
+  }
 }
 ```
 
 ---
 
-## Web Dashboard Bridge Integration (@m3rcena/bridge)
+## 6. Core Banking & Dual-Currency System (`BankManager`)
 
-Connect `@m3rcena/eco` to `@m3rcena/bridge` to stream economy changes live to your React / Next.js web dashboard:
+Manages player accounts, wallet funds, bank storage, deposits, withdrawals, and peer transfers.
+
+### Methods
+
+#### `eco.getBalance(userId: string, guildId?: string): Promise<UserAccount>`
+Returns the complete user account record with `wallet`, `bank`, `bankCapacity`, and computed `netWorth`.
+
+#### `eco.deposit(userId: string, amount: number | "all", guildId?: string): Promise<TransferResult>`
+Transfers funds from `wallet` to `bank`. Automatically caps deposits at `bankCapacity`.
+```typescript
+const res = await eco.deposit(message.author.id, 500);
+if (!res.success) message.reply(res.error);
+```
+
+#### `eco.withdraw(userId: string, amount: number | "all", guildId?: string): Promise<TransferResult>`
+Transfers funds from `bank` to `wallet`.
+
+#### `eco.transfer(fromUserId: string, toUserId: string, amount: number, guildId?: string): Promise<TransferResult>`
+Transfers funds between two users with optional percentage fees (`transactionFeePercentage`).
+
+#### `eco.modifyWallet(userId: string, delta: number, guildId?: string): Promise<UserAccount>`
+Directly increments or decrements cash in a user's wallet.
+
+#### `eco.modifyBank(userId: string, delta: number, guildId?: string): Promise<UserAccount>`
+Directly increments or decrements balance in a user's bank.
+
+#### `eco.setBankCapacity(userId: string, newCap: number, guildId?: string): Promise<UserAccount>`
+Sets maximum bank storage limit.
+
+---
+
+## 7. Daily Streaks, Work, Crime & Robbery (`RewardManager`)
+
+Manages recurring player actions, time-gated reward claims, and high-risk criminal gameplay.
+
+### Default Cooldowns
+- **Daily**: 24 hours (`86,400,000` ms)
+- **Weekly**: 7 days (`604,800,000` ms)
+- **Monthly**: 30 days (`2,592,000,000` ms)
+- **Hourly**: 1 hour (`3,600,000` ms)
+- **Work**: 30 minutes (`1,800,000` ms)
+- **Beg**: 45 seconds (`45,000` ms)
+- **Crime**: 15 minutes (`900,000` ms)
+- **Rob**: 2 hours (`7,200,000` ms)
+
+### Methods
+
+#### `eco.daily(userId, guildId?): Promise<RewardClaimResult>`
+Claims daily cash reward with progressive streak bonuses.
+
+#### `eco.work(userId, guildId?): Promise<WorkResult>`
+Works a shift at the user's active career job. Awards career salary and character XP.
+
+#### `eco.beg(userId, guildId?): Promise<BegResult>`
+Begs from a randomized NPC (e.g. Elon Musk, MrBeast, Grandma) with custom dialogue quotes.
+
+#### `eco.crime(userId, guildId?): Promise<CrimeResult>`
+Attempts high-risk crime. 50% chance to earn 🪙 1,500 - 4,000; 50% chance to be fined by the police.
+
+#### `eco.rob(robberId, victimId, guildId?): Promise<RobResult>`
+Attempts to steal wallet cash from another player.
+- **Titanium Padlock Shield**: If the victim owns a padlock, robbery fails and the padlock breaks.
+- **Fail Penalty**: If caught, the robber pays a fine to the victim.
+
+---
+
+## 8. Career Progression & Jobs (`CareerManager`)
+
+Provides a 10-tier career progression ladder with promotion mechanics and salary scaling.
+
+### Career Ladder (`DEFAULT_JOBS`)
+
+| Tier | Job Title | Base Salary | Required Level | Required Shifts for Promotion |
+| :---: | :--- | :---: | :---: | :---: |
+| 1 | 🧹 Janitor | 🪙 150 | Lv 1 | 5 Shifts |
+| 2 | ☕ Barista | 🪙 350 | Lv 2 | 10 Shifts |
+| 3 | 📦 Delivery Courier | 🪙 650 | Lv 4 | 15 Shifts |
+| 4 | 💻 Junior Software Dev | 🪙 1,200 | Lv 7 | 20 Shifts |
+| 5 | 🔐 Cyber Security Analyst | 🪙 2,400 | Lv 12 | 25 Shifts |
+| 6 | 📈 Wall Street Broker | 🪙 4,800 | Lv 18 | 30 Shifts |
+| 7 | 🚀 Aerospace Engineer | 🪙 9,500 | Lv 25 | 35 Shifts |
+| 8 | ⚖️ Corporate Law Partner | 🪙 18,000 | Lv 35 | 40 Shifts |
+| 9 | 🏥 Chief Medical Officer | 🪙 35,000 | Lv 50 | 50 Shifts |
+| 10 | 👑 Hedge Fund Managing Dir | 🪙 75,000 | Lv 75 | Max Tier |
+
+### Methods
+- `eco.careers.getAvailableJobs()`: List all career options.
+- `eco.careers.apply(userId, jobId, guildId?)`: Apply for a position.
+- `eco.careers.getUserJob(userId, guildId?)`: Get active job details and promotion progress.
+
+---
+
+## 9. Shop, Inventory & Consumable Buffs (`ShopManager`)
+
+Full player inventory management with interactive shopping and consumable buffs.
+
+### Default Item Catalog (`DEFAULT_SHOP_ITEMS`)
+
+| ID | Name | Price | Type | Effect Description |
+| :--- | :--- | :---: | :---: | :--- |
+| `padlock` | 🔒 Titanium Padlock | 🪙 2,500 | Defense | Blocks 1 robbery attempt; breaks on protection. |
+| `energy_drink` | ⚡ Cyber Energy Drink | 🪙 800 | Consumable | Instantly resets your work shift cooldown. |
+| `lucky_clover` | 🍀 Four-Leaf Clover | 🪙 3,500 | Consumable | Grants +15% casino winning probability for 1 hour. |
+| `swiss_key` | 🗝️ Swiss Vault Key | 🪙 15,000 | Permanent | Permanently expands maximum bank capacity by +🪙 25,000. |
+| `crypto_miner` | ⛏️ ASIC Mining Rig | 🪙 30,000 | Business | Generates passive crypto yields into your wallet. |
+
+### Methods
+- `eco.shop.getItems()`: Retrieve active shop catalog.
+- `eco.shop.buy(userId, itemId, quantity, guildId?)`: Buy items with wallet cash.
+- `eco.shop.sell(userId, itemId, quantity, guildId?)`: Sell items back for 70% refund.
+- `eco.shop.use(userId, itemId, guildId?)`: Activate consumable buff.
+
+---
+
+## 10. Passive Business Investment (`BusinessManager`)
+
+Allows players to purchase enterprises, upgrade facilities, hire staff, and collect passive income.
+
+### Business Catalog (`DEFAULT_BUSINESS_CATALOG`)
+
+| ID | Enterprise | Base Cost | Hourly Revenue | Base Employees |
+| :--- | :--- | :---: | :---: | :---: |
+| `kiosk` | ☕ Coffee Kiosk | 🪙 10,000 | 🪙 400 / hr | 2 Baristas |
+| `startup` | 💻 SaaS Tech Startup | 🪙 50,000 | 🪙 2,500 / hr | 5 Developers |
+| `mining_rig` | ⛏️ Bitcoin Mining Farm | 🪙 150,000 | 🪙 9,000 / hr | 3 Engineers |
+| `megacorp` | 🏢 Conglomerate Holding Corp | 🪙 1,000,000 | 🪙 75,000 / hr | 25 Executives |
+
+### Methods
+- `eco.businesses.buy(userId, businessId, guildId?)`: Purchase enterprise.
+- `eco.businesses.upgrade(userId, businessId, guildId?)`: Level up facility multiplier.
+- `eco.businesses.hire(userId, businessId, count, guildId?)`: Hire employees for revenue boost.
+- `eco.businesses.collect(userId, guildId?)`: Harvest accumulated revenue.
+
+---
+
+## 11. Casino & High-Stakes Gambling Suite (`CasinoManager`)
+
+A complete, strictly audited casino suite with fair random math.
+
+### 11.1. Coinflip
+```typescript
+const res = await eco.coinflip(userId, 500, "heads");
+// res: { won: boolean, choice: "heads", outcome: "heads", payout: 1000 }
+```
+
+### 11.2. Dice Roll
+```typescript
+// Prediction: "high" (4-6), "low" (1-3), or exact number (1-6)
+const res = await eco.dice(userId, 250, "high");
+```
+
+### 11.3. Slot Machine
+Spins 3 reels. Triple 7s award the 50x Mega Jackpot!
+```typescript
+const res = await eco.slots(userId, 100);
+// res: { reels: ["💎", "💎", "💎"], multiplier: 15, payout: 1500 }
+```
+
+### 11.4. European Roulette
+Supports red, black, green (0), even, odd, or exact numbers (0-36).
+```typescript
+const res = await eco.roulette(userId, 1000, "red");
+```
+
+### 11.5. Crash Multiplier
+Simulates the popular crypto crash curve.
+```typescript
+const res = await eco.crash(userId, 500, 2.5); // Target: 2.5x
+```
+
+### 11.6. Blackjack Table
+Interactive dealer vs player blackjack:
+```typescript
+const session = await eco.casino.startBlackjack(userId, 500);
+// Hit or Stand
+const updated = await eco.casino.stepBlackjack(userId, "hit");
+```
+
+---
+
+## 12. Simulated Stock & Crypto Exchange (`StockMarketManager`)
+
+Simulates a live stock and crypto exchange with price fluctuations and market charts.
+
+### Assets Tracked
+- `TECH`: Antigravity Technologies
+- `CRYP`: Cyber Bitcoin
+- `CORP`: Apex Conglomerate
+- `AERO`: Orbital Aerospace
+
+### Methods
+- `eco.stocks.getMarketOverview()`: Live prices, 24h change, and volume.
+- `eco.stocks.buy(userId, symbol, shares, guildId?)`: Market buy order.
+- `eco.stocks.sell(userId, symbol, shares, guildId?)`: Market sell order with realized PnL.
+- `eco.stocks.getUserPortfolio(userId, guildId?)`: Portfolio holdings and valuation.
+
+---
+
+## 13. Multiplayer Syndicate Heists (`HeistManager`)
+
+Assemble a crew of up to 4 players to rob high-security bank vaults.
+
+### Roles
+- **Hacker**: Disables security lasers and firewall protocols.
+- **Muscle**: Subdues bank guards and patrols.
+- **Driver**: Accelerates getaway speeds and lowers arrest probability.
+- **Infiltrator**: Cracks vault lock combinations.
+
+### Targets
+1. 🏦 Local Credit Union (Difficulty: Easy, Loot: 🪙 50,000)
+2. 🏛️ Central Federal Reserve (Difficulty: Hard, Loot: 🪙 250,000)
+3. 🌐 Global Cyber Vault (Difficulty: Insane, Loot: 🪙 1,000,000)
+
+---
+
+## 14. Companion Pets & Foraging (`PetManager`)
+
+Adopt pets, feed them, level up companion loyalty, and dispatch them on timed expeditions for passive loot:
+- `eco.pets.adopt(userId, petId, nickname)`
+- `eco.pets.feed(userId, petId)`
+- `eco.pets.startExpedition(userId, petId, durationMs)`
+- `eco.pets.claimExpedition(userId, petId)`
+
+---
+
+## 15. Mystery Loot Crates (`CrateManager`)
+
+Unbox mystery crates with animated reveals and rare item rewards:
+- **Common Crate**: 🪙 1,500 (Small coins + Common consumables)
+- **Rare Crate**: 🪙 5,000 (Coins + XP + Tools)
+- **Epic Crate**: 🪙 25,000 (Large payouts + Swiss Keys)
+- **Legendary Crate**: 🪙 100,000 (Huge jackpots + Permanent multipliers)
+
+---
+
+## 16. Real Economy: Bank Vaults & Compound Interest (`VaultManager`)
+
+Upgrade bank vault security tiers to expand holding ceilings, protect funds against robbers, and earn compound daily interest:
+- **Tiers**: Standard ➔ Bronze ➔ Silver ➔ Gold ➔ Platinum ➔ Diamond ➔ Swiss Titanium.
+- `eco.vault.inspect(userId)`: Inspect current vault tier and interest rate.
+- `eco.vault.upgrade(userId)`: Upgrade to the next security vault tier.
+
+---
+
+## 17. Real Economy: Credit Score, Loans & Debt (`LoanManager`)
+
+A realistic credit scoring and lending engine:
+- **FICO Score (300 - 850)**: Rated as `POOR`, `FAIR`, `GOOD`, or `EXCELLENT`.
+- **Loan Tiers**: Starter Microloan, Small Business Loan, Commercial Mortgage, Megacorp Credit Line.
+- **Credit Dynamics**: Timely loan repayments increase FICO scores and unlock larger credit lines; missed payments damage credit and trigger default penalties.
+- `eco.loans.getCreditScore(userId)`
+- `eco.loans.apply(userId, tierId)`
+- `eco.loans.repay(userId, amount)`
+
+---
+
+## 18. Real Economy: Municipal Bills, Taxes & Audits (`TaxManager`)
+
+Progressive taxation and municipal bills:
+- **Public Utility Bills**: Periodic water, energy, and network infrastructure fees.
+- **Progressive Wealth Tax**: Applied to accounts exceeding multi-million net-worth thresholds.
+- **Municipal Audits**: Players who evade taxes face audits, asset freezes, and penalty fees.
+- **Good Citizen Perks**: Paying bills on time grants tax discounts and XP bonuses.
+- `eco.taxes.getPendingBills(userId)`
+- `eco.taxes.payBill(userId, billId)`
+- `eco.taxes.payAllBills(userId)`
+
+---
+
+## 19. Interactive Discord Components V2 UI Suite
+
+`@m3rcena/eco` bundles 10 turn-key interactive user interfaces utilizing Discord Components V2:
+
+```typescript
+import {
+  EcoProfileUI,
+  EcoShopUI,
+  EcoStockMarketUI,
+  EcoHeistUI,
+  EcoBlackjackUI,
+  EcoCrateUI,
+  EcoLeaderboardUI,
+  EcoVaultUI,
+  EcoLoanUI,
+  EcoBillsUI,
+} from "@m3rcena/eco";
+
+// 1. Digital Debit Card & Passport Profile
+new EcoProfileUI(eco, { context: interaction }).start();
+
+// 2. Interactive Storefront
+new EcoShopUI(eco, { context: interaction }).start();
+
+// 3. Stock Trader & Candle Chart
+new EcoStockMarketUI(eco, { context: interaction }).start();
+
+// 4. Syndicate Heist Recruitment Lobby
+new EcoHeistUI(eco, { context: interaction }).start();
+
+// 5. Interactive Blackjack Table
+new EcoBlackjackUI(eco, { context: interaction, betAmount: 500 }).start();
+
+// 6. Mystery Loot Crate Unboxing
+new EcoCrateUI(eco, { context: interaction }).start();
+
+// 7. Rich Paginated Net Worth Leaderboard
+new EcoLeaderboardUI(eco, { context: interaction }).start();
+
+// 8. Bank Vault Upgrades
+new EcoVaultUI(eco, { context: interaction }).start();
+
+// 9. Credit Score & Loan Terminal
+new EcoLoanUI(eco, { context: interaction }).start();
+
+// 10. Municipal Bills & Tax Ledger
+new EcoBillsUI(eco, { context: interaction }).start();
+```
+
+---
+
+## 20. High-Resolution Canvas Card Renderers
+
+Bundles native `@napi-rs/canvas` visual generators:
+
+### `RenderBankCard`
+Generates a customized debit card complete with holographic microchip, holographic security foil, cardholder name, and bank balance:
+```typescript
+import { RenderBankCard } from "@m3rcena/eco";
+
+const buffer = await RenderBankCard.render({
+  username: "M3rcenaDev",
+  avatarUrl: "https://cdn.discordapp.com/avatars/...",
+  wallet: 25000,
+  bank: 150000,
+  netWorth: 175000,
+  bankName: "CYBER CREDIT UNION",
+  cardNumber: "4092 •••• •••• 8821",
+});
+```
+
+### `RenderMarketChart`
+Generates clean candlestick and sparkline price history charts with volume bars:
+```typescript
+import { RenderMarketChart } from "@m3rcena/eco";
+
+const chartBuffer = await RenderMarketChart.render({
+  symbol: "TECH",
+  name: "Antigravity Technologies",
+  currentPrice: 342.50,
+  change24h: 8.4,
+  history: [310, 315, 320, 318, 330, 342.50],
+});
+```
+
+---
+
+## 21. Cross-Platform Bridge Integration (`EcoBridgeRouter`)
+
+Connect `@m3rcena/eco` to `@m3rcena/bridge` in one line:
 
 ```typescript
 import { M3rcenaBridge } from "@m3rcena/bridge";
 import { EcoManager } from "@m3rcena/eco";
 
-const bridge = new M3rcenaBridge({
-  requireOnlinePresenceForAudio: true, // Audio cues only play when user has the dashboard open!
-});
-
-// Pattern A: Pass bridge into constructor options
+const bridge = new M3rcenaBridge();
 const eco = new EcoManager({ bridge });
 
-// Pattern B: Or mount directly with fluent bridge.use()
-// bridge.use(eco);
-
-// Pattern C: Or via connection handshake method
-// eco.connectBridge(bridge);
+// Fluent chaining also supported:
+bridge.use(eco);
 ```
 
-### Real-Time Dispatched Events
-- `wallet:add`, `wallet:remove`
-- `bank:deposit`, `bank:withdraw`, `bank:transfer`
-- `shop:buy`, `shop:sell`, `shop:use`
-- `business:buy`, `business:upgrade`, `business:collect`
-- `casino:blackjack_win`, `casino:coinflip`, `casino:slots`, `casino:crash`
-- Live Audio Cues: `coin_drop`, `win`, `purchase`, `rob_siren`
+### Complete REST Route Reference (`/api/eco/*`)
 
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/eco/account/:userId` | Get full user account ledger (wallet, bank, net worth, vault, credit score). |
+| `GET` | `/api/eco/cards/debit/:userId` | Returns rendered PNG buffer of user's holographic debit card. |
+| `GET` | `/api/eco/market/overview` | Returns live prices and 24h metrics for all stocks and crypto. |
+| `GET` | `/api/eco/market/chart/:symbol` | Returns rendered PNG sparkline / candlestick chart buffer. |
+| `GET` | `/api/eco/leaderboard` | Returns top accounts ranked by net worth, wallet, or bank. |
+| `GET` | `/api/eco/vault/:userId` | Returns current bank vault tier and upgrade pricing. |
+| `GET` | `/api/eco/loans/:userId` | Returns FICO credit score, active debt, and loan offers. |
+| `GET` | `/api/eco/bills/:userId` | Returns pending municipal utility bills and wealth taxes. |
+| `POST` | `/api/eco/action/transfer` | Execute peer-to-peer money transfer. |
+| `POST` | `/api/eco/action/gamble` | Place bets on coinflip, slots, dice, or roulette. |
+| `POST` | `/api/eco/action/trade-stock` | Execute stock/crypto buy or sell orders. |
+
+### Live Bridge Audio Cues Dispatched
+- `coin_drop`: Triggered on wallet modifications and cash earnings.
+- `cash_register`: Triggered on shop purchases and bill settlements.
+- `jackpot`: Triggered on slot machine 50x Mega Jackpots.
+- `alarm`: Triggered on robbery attempts and bank heists.
+- `upgrade_ding`: Triggered on vault tier expansions and job promotions.
+
+---
+
+## 22. Complete TypeScript Types Reference
+
+All types, configs, and adapters are exported from `@m3rcena/eco`:
+
+```typescript
+export {
+  EcoManager,
+  BankManager,
+  RewardManager,
+  CareerManager,
+  ShopManager,
+  BusinessManager,
+  CasinoManager,
+  LeaderboardManager,
+  StockMarketManager,
+  HeistManager,
+  PetManager,
+  CrateManager,
+  VaultManager,
+  LoanManager,
+  TaxManager,
+  EcoBridgeRouter,
+  // Database Handlers
+  SqliteEcoStorage,
+  PrismaEcoStorage,
+  EcoDatabaseHandler,
+  resolveEcoStorage,
+  applyPrismaEcoModel,
+  PRISMA_ECO_MODEL,
+  // UI Suite
+  EcoProfileUI,
+  EcoShopUI,
+  EcoStockMarketUI,
+  EcoHeistUI,
+  EcoBlackjackUI,
+  EcoCrateUI,
+  EcoLeaderboardUI,
+  EcoVaultUI,
+  EcoLoanUI,
+  EcoBillsUI,
+  // Canvas Renderers
+  RenderBankCard,
+  RenderMarketChart,
+  // Types
+  type UserAccount,
+  type EcoDatabaseConfig,
+  type EcoStorageAdapter,
+  type TransferResult,
+  type RobResult,
+  type CasinoBetResult,
+  type StockConfig,
+  type StockTradeResult,
+  type HeistTarget,
+  type UserPet,
+  type BankVaultTier,
+  type CreditScoreData,
+  type LoanOffer,
+  type MunicipalBill,
+};
+```
