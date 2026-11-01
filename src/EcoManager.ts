@@ -23,6 +23,7 @@ import { TaxManager } from "./modules/TaxManager.js";
 import { EcoBridgeRouter } from "./bridge/EcoBridgeRouter.js";
 import { EcoStorageAdapter, MemoryEcoStorage, JsonEcoStorage } from "./storage/EcoStorage.js";
 import { resolveEcoStorage, EcoDatabaseHandler } from "./storage/EcoDatabaseHandler.js";
+import { EcoWekyConnector, EcoWekyConnectorOptions } from "./connector/EcoWekyConnector.js";
 import { checkPackageUpdates, ECO_VERSION } from "./utils/Notifier.js";
 import {
   EcoManagerOptions,
@@ -165,6 +166,14 @@ export class EcoManager {
    */
   public connectBridge(bridge: any): this {
     return this.setBridge(bridge);
+  }
+
+  /**
+   * Connects this economy instance with @m3rcena/weky minigames engine.
+   * Enables automated coin payouts, streak bonuses, solo score multipliers, PvP wager bets, and tournament prize pools.
+   */
+  public connectWeky(weky: any, options?: EcoWekyConnectorOptions): EcoWekyConnector {
+    return new EcoWekyConnector(this, weky, options);
   }
 
   /**

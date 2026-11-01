@@ -775,7 +775,39 @@ bridge.use(eco);
 
 ---
 
-## 22. Complete TypeScript Types Reference
+## 22. Weky Minigames Integration (`EcoWekyConnector`)
+
+Seamlessly connect `@m3rcena/eco` to `@m3rcena/weky` to disburse minigame rewards, escrow PvP bet pots, and reward tournament champions:
+
+```typescript
+import { EcoManager } from "@m3rcena/eco";
+import { WekyManager } from "@m3rcena/weky";
+
+const eco = new EcoManager({ database: "sqlite" });
+const weky = new WekyManager(client, { database: "sqlite" });
+
+export const connector = eco.connectWeky(weky, {
+  defaultWinReward: 50,         // Coins awarded on minigame victory
+  defaultLossPenalty: 0,        // Coins deducted on defeat
+  defaultScoreMultiplier: 0.05, // Solo score multiplier (1000 pts = 50 coins)
+  streakBonus: 10,              // +10 bonus coins per active win streak count
+  tournamentChampionPrize: 500, // Tournament champion prize
+  wagerHouseFee: 5,             // 5% house fee taken from PvP bet pots
+});
+
+// Escrow a PvP wager duel:
+await connector.createWager({
+  wagerId: interaction.channelId,
+  player1Id: player1.id,
+  player2Id: player2.id,
+  amount: 100, // 100 coins each = 200 pot
+  game: "fight",
+});
+```
+
+---
+
+## 23. Complete TypeScript Types Reference
 
 All types, configs, and adapters are exported from `@m3rcena/eco`:
 

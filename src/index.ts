@@ -40,6 +40,7 @@ export * from "./ui/EcoVaultUI.js";
 export * from "./ui/EcoLoanUI.js";
 export * from "./ui/EcoBillsUI.js";
 export * from "./bridge/EcoBridgeRouter.js";
+export * from "./connector/EcoWekyConnector.js";
 export * from "./EcoManager.js";
 export { M3rcenaBridge } from "@m3rcena/bridge";
 export {

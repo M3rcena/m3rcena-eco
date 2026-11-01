@@ -66,8 +66,11 @@ export class EcoDatabaseHandler {
  * Convenience helper to resolve an EcoStorageAdapter from either an existing storage instance or database config.
  */
 export function resolveEcoStorage(options: { storage?: any; database?: EcoDatabaseConfig }): EcoStorageAdapter {
-  if (options.storage) {
+  if (options.storage && typeof options.storage === "object" && typeof options.storage.getAccount === "function") {
     return options.storage;
+  }
+  if (typeof options.storage === "string") {
+    return EcoDatabaseHandler.create(options.storage as any);
   }
   if (options.database) {
     return EcoDatabaseHandler.create(options.database);
