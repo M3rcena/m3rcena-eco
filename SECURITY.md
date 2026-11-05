@@ -1,22 +1,11 @@
 # Security Policy
 
-## Supported Runtimes
+## Supported Versions
 
-We prioritize modern, secure runtimes. Older runtimes that have reached End-Of-Life (EOL) are not supported.
-
-| Node.js Version | Supported          |
-|-----------------|--------------------|
-| 26.x LTS        | :white_check_mark: |
-| 24.x LTS        | :white_check_mark: |
-| 22.x LTS        | :white_check_mark: |
-| < 22.0.0 (EOL)  | :x:                |
+| Version  | Supported          |
+| -------- | ------------------ |
+| ^14.28.0 | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in `@m3rcena/eco`, please report it privately:
-
-- **Email**: `security@m3rcena.dev`
-- **GitHub**: Use private vulnerability reporting on the repository.
-
-Please do not open public issues for sensitive security vulnerabilities. We will respond within 48 hours to confirm the report and provide a coordinated timeline for disclosure.
-
+Please report (suspected) security vulnerabilities to [d4rk.s0ul](https://discord.com/users/682983233851228161/) via Discord or via Github Private Vulnerability menu. You will receive a response from us within 24 hours. If the issue is confirmed, we will release a patch as soon as possible depending on complexity but historically within a few days.

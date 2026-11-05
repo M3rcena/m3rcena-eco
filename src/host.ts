@@ -15,6 +15,7 @@ import { EcoBridgeRouter } from "./bridge/EcoBridgeRouter.js";
 import { SqliteEcoStorage } from "./storage/SqliteEcoStorage.js";
 import { RenderBankCard } from "./canvas/RenderBankCard.js";
 import { getAllPackageResolutions, printResolutionSummary } from "./resolver.js";
+import { ECO_VERSION } from "./utils/Notifier.js";
 import type { BridgeRequest, BridgeResponse } from "@m3rcena/bridge";
 
 export interface HostEcoOptions {
@@ -77,7 +78,7 @@ export async function hostEco(options: HostEcoOptions = {}): Promise<{
           status: "healthy",
           package: "@m3rcena/eco",
           mode: "local-submodule-host",
-          version: "14.28.0",
+          version: ECO_VERSION,
           database: "SQLite",
           dbPath,
           uptime: process.uptime(),

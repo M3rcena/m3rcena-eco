@@ -4,7 +4,9 @@
   <p><strong>The ultimate enterprise-grade Discord.js v14 economy, progression, stock market, and casino engine.</strong></p>
   <p>
     <a href="https://www.npmjs.com/package/@m3rcena/eco"><img src="https://img.shields.io/npm/v/@m3rcena/eco.svg?style=flat-square" alt="NPM Version" /></a>
-    <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg?style=flat-square" alt="Node Support" /></a>
+    <img src="https://img.shields.io/badge/discord.js-v14.28.1-5865F2?style=flat-square&logo=discord" alt="discord.js v14.28.1" />
+    <img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg?style=flat-square&logo=node.js" alt="Node Support" />
+    <img src="https://img.shields.io/badge/TypeScript-7.0-blue?style=flat-square&logo=typescript" alt="TypeScript" />
     <a href="https://github.com/M3rcena/m3rcena-eco/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square" alt="License" /></a>
     <a href="https://github.com/M3rcena/m3rcena-eco/wiki"><img src="https://img.shields.io/badge/Wiki-Documentation-purple.svg?style=flat-square" alt="Eco Wiki Documentation" /></a>
   </p>
@@ -30,18 +32,68 @@
 - 🎰 **Casino & Gambling Suite**: Components V2 interactive Blackjack table (Hit, Stand, Double Down), Coinflip, Roulette, Crash multiplier rockets, Dice, and Slots.
 - 🏢 **Passive Business Enterprises**: Buy and upgrade companies (Lemonade Stands, Coffee Chains, Off-World Mining) with employee hiring and offline profit accumulation.
 - 🏆 **Interactive Leaderboards**: Paginated top rankings with metric selection (`Net Worth`, `Wallet`, `Bank`, `Level`, `Streaks`).
+- 💾 **Native SQLite & Enterprise Prisma Storage**: Built-in zero-dependency local SQLite (`node:sqlite` WAL mode via `SqliteEcoStorage`) and auto-migrating Prisma ORM adapter (`PrismaEcoStorage`).
+- 🦀 **Rust-Style Submodule Resolver**: Install and host via Git submodules locally with zero npm dependencies or transparently fall back to npm (`@m3rcena/eco/resolver`, `@m3rcena/eco/register`, `@m3rcena/eco/host`).
 - 🌐 **Dashboard Bridge**: Native integration with `@m3rcena/bridge` for real-time WebSocket syncing and presence-filtered audio cues (`coin_drop`, `win`, `purchase`, `rob_siren`).
+- 🤖 **Discord.js v14.28.1 Ready**: Fully compatible with the latest Discord.js updates and `clientReady` lifecycle.
 - ⚡ **Next-Gen Performance**: Dual ESM/CJS, TypeScript 7.0 definitions, zero bloat, and sub-millisecond execution.
 
 ---
 
 ## 📦 Installation
 
+### Option A: Standard NPM Installation
+
 ```bash
+# npm
 npm install @m3rcena/eco @m3rcena/bridge @napi-rs/canvas discord.js
+
+# pnpm
+pnpm add @m3rcena/eco @m3rcena/bridge @napi-rs/canvas discord.js
+
+# yarn
+yarn add @m3rcena/eco @m3rcena/bridge @napi-rs/canvas discord.js
 ```
 
 > **Note**: Requires Node.js **22.0.0+** (LTS 22, 24, 26). Node 20 is EOL and unsupported.
+
+### Option B: Local Git Submodule (Rust-Style Resolver)
+
+You can vendor and host `@m3rcena/eco` locally via Git submodules without needing to publish or pull from npm:
+
+```bash
+git submodule add https://github.com/M3rcena/m3rcena-eco.git submodules/m3rcena-eco
+```
+
+Add auto-registration at the top of your app entrypoint:
+```typescript
+import "@m3rcena/eco/register";
+```
+
+Or run standalone hosting:
+```bash
+npx tsx @m3rcena/eco/host --port 5124
+```
+
+---
+
+## 💾 Database Handlers & Persistence
+
+`@m3rcena/eco` supports native SQLite WAL mode, Prisma ORM, and JSON file storage:
+
+```typescript
+import {
+  EcoManager,
+  SqliteEcoStorage,   // Zero-dependency SQLite (WAL mode)
+  PrismaEcoStorage,   // PostgreSQL / MySQL / SQLite via Prisma ORM
+  JsonEcoStorage,     // Lightweight JSON file storage
+} from "@m3rcena/eco";
+
+// Zero-dependency SQLite with WAL journal mode:
+const eco = new EcoManager({
+  storage: new SqliteEcoStorage("./data/economy.sqlite"),
+});
+```
 
 ---
 

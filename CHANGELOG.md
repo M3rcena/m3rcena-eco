@@ -5,6 +5,34 @@ All notable changes to `@m3rcena/eco` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
+## [14.28.1] - 2026-11-05
+
+### 🚀 Enhancements & Compatibility
+
+#### Added
+- **Discord.js v14.28.1 Compatibility**:
+  - Full compatibility with Discord.js `14.28.1` and `Events.ClientReady` lifecycle.
+- **Zero-Dependency Native SQLite Storage (`SqliteEcoStorage`)**:
+  - Built-in persistent storage adapter utilizing Node.js 22+ native `node:sqlite` DatabaseSync with WAL journal mode.
+  - Automatic table initialization for `eco_accounts` and `eco_kv`.
+- **Enterprise Prisma ORM Adapter (`PrismaEcoStorage`)**:
+  - Auto-migrating Prisma storage with auto-schema injection and raw SQL fallbacks for PostgreSQL, MySQL, and SQLite.
+  - Schema migration helpers (`PRISMA_ECO_MODEL`, `applyPrismaEcoModel`).
+- **Rust-Style Submodule Resolver & Local Hosting**:
+  - Local-first Git submodule detection via `@m3rcena/eco/resolver`.
+  - Zero-config runtime interception flag via `@m3rcena/eco/register`.
+  - Standalone CLI host service via `@m3rcena/eco/host` (`hostEco`).
+- **Terminal Update Notifier**:
+  - Symmetrical terminal notification box with semver comparison (`checkPackageUpdates`).
+- **Strongly-Typed Event Emitter**:
+  - Comprehensive TypeScript definition for all `EcoEvents` parameters across `on`, `once`, and `off`.
+- **Synchronized with `@m3rcena/bridge` v14.28.1**:
+  - Full real-time bi-directional action dispatching, debit card REST streaming, and presence-filtered audio cues.
+
+---
+
 ## [14.28.0] - 2026-11-01
 
 ### Added

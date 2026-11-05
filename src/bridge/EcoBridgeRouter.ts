@@ -14,12 +14,13 @@ import { EcoManager } from "../EcoManager.js";
 import { RenderBankCard } from "../canvas/RenderBankCard.js";
 import { RenderMarketChart } from "../canvas/RenderMarketChart.js";
 import { LoanTier } from "../types.js";
+import { ECO_VERSION } from "../utils/Notifier.js";
 
 export class EcoBridgeRouter implements BridgePackageRouter {
   public name: string = "economy";
   public basePath: string = "/api/eco";
   public description: string = "Universal economy engine, financial banking, loans, taxes, stock market, and debit card rendering.";
-  public version: string = "14.28.0";
+  public version: string = ECO_VERSION;
   private eco: EcoManager;
 
   constructor(eco: EcoManager) {

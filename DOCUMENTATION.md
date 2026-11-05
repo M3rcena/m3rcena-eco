@@ -8,7 +8,7 @@
 > - **[Stocks, Heists, Pets & Loot Crates](https://github.com/M3rcena/m3rcena-eco/wiki/Stocks-Heists-and-Pets)**
 > - **[Dashboard Bridge Integration](https://github.com/M3rcena/m3rcena-eco/wiki/Bridge-Integration)**
 
-Welcome to the definitive documentation for **`@m3rcena/eco`** (v14.28.0) — the ultimate enterprise-grade Discord.js v14 economy, progression, career, stock market, and casino engine.
+Welcome to the definitive documentation for **`@m3rcena/eco`** (v14.28.1) — the ultimate enterprise-grade Discord.js v14 economy, progression, career, stock market, and casino engine.
 
 ---
 

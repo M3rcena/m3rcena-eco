@@ -1,6 +1,6 @@
 {
   "name": "@m3rcena/eco",
-  "version": "14.28.0",
+  "version": "14.28.1",
   "description": "The ultimate Discord.js v14 economy engine. Dual wallet/bank, career jobs, items & inventory, businesses, interactive casino gambling, robbery, market trading, and web dashboard bridge.",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -83,9 +83,9 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@m3rcena/bridge": "^14.28.0",
+    "@m3rcena/bridge": "^14.28.1",
     "@napi-rs/canvas": "^0.1.68",
-    "discord.js": "^14.28.0"
+    "discord.js": "^14.28.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
