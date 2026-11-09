@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [14.28.1-1] - 2026-11-09
+
+### 🩹 Fixed
+- **Fix (Storage)**: Wrap fallback SQLite raw queries inside `try/catch` in `PrismaEcoStorage.saveAccount()` to prevent unhandled rejection crashes when executed against PostgreSQL environments.
+- **Fix (Database)**: Remove early return in `ensureMigrated()` so `autoMigrate` reliably provisions `EcoAccount` if tables are not yet created even when Prisma client models are pre-generated.
+
+---
+
 ## [14.28.1] - 2026-11-05
 
 ### 🚀 Enhancements & Compatibility

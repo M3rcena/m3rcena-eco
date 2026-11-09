@@ -89,14 +89,9 @@ export class PrismaEcoStorage implements EcoStorageAdapter {
     }
   }
 
-  private async ensureMigrated(): Promise<void> {
+  public async ensureMigrated(): Promise<void> {
     if (this.migrated || !this.autoMigrate || !this.client) return;
     this.migrated = true;
-
-    // If client delegate already exists, migration was likely handled by prisma migrate
-    if (this.client[this.modelName]) {
-      return;
-    }
 
     // Attempt auto-creation via raw queries
     if (typeof this.client.$executeRawUnsafe === "function") {
@@ -128,7 +123,7 @@ export class PrismaEcoStorage implements EcoStorageAdapter {
             );
           `);
         } catch {
-          // Table exists or database permissions prohibit DDL
+          // Wrapped safely
         }
       }
     }
@@ -249,26 +244,31 @@ export class PrismaEcoStorage implements EcoStorageAdapter {
           account.level,
           serialized
         );
+        return;
       } catch {
-        // SQLite dialect fallback
-        await this.client.$executeRawUnsafe(
-          `
-          INSERT INTO ${this.tableName} (userId, guildId, wallet, bank, level, data, updatedAt)
-          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-          ON CONFLICT(userId, guildId) DO UPDATE SET
-            wallet = excluded.wallet,
-            bank = excluded.bank,
-            level = excluded.level,
-            data = excluded.data,
-            updatedAt = CURRENT_TIMESTAMP
-          `,
-          account.userId,
-          gid,
-          account.wallet,
-          account.bank,
-          account.level,
-          serialized
-        );
+        try {
+          // SQLite dialect fallback
+          await this.client.$executeRawUnsafe(
+            `
+            INSERT INTO ${this.tableName} (userId, guildId, wallet, bank, level, data, updatedAt)
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(userId, guildId) DO UPDATE SET
+              wallet = excluded.wallet,
+              bank = excluded.bank,
+              level = excluded.level,
+              data = excluded.data,
+              updatedAt = CURRENT_TIMESTAMP
+            `,
+            account.userId,
+            gid,
+            account.wallet,
+            account.bank,
+            account.level,
+            serialized
+          );
+        } catch {
+          // Wrapped safely
+        }
       }
     }
   }

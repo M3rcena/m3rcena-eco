@@ -1,5 +1,5 @@
 Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
-const require_host = require("./host-Bmld-WtZ.cjs");
+const require_host = require("./host-B5KKomg1.cjs");
 const require_resolver = require("./resolver.cjs");
 let discord_js = require("discord.js");
 let _m3rcena_bridge = require("@m3rcena/bridge");

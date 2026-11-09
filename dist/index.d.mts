@@ -49,7 +49,7 @@ export declare class PrismaEcoStorage implements EcoStorageAdapter {
   private autoMigrate;
   private migrated;
   constructor(options: any | PrismaEcoStorageOptions);
-  private ensureMigrated;
+  ensureMigrated(): Promise<void>;
   getAccount(userId: string, guildId?: string): Promise<UserAccount | null>;
   saveAccount(account: UserAccount): Promise<void>;
   getTopAccounts(sortBy?: "netWorth" | "wallet" | "bank" | "level", limit?: number, guildId?: string): Promise<UserAccount[]>;
@@ -313,7 +313,7 @@ export declare class EcoBillsUI extends EcoBaseUI {
  * @copyright 2026 M3rcena Development. All rights reserved.
  * @license Apache-2.0
  */
-export declare const ECO_VERSION = "14.28.1";
+export declare const ECO_VERSION = "14.28.1-1";
 /**
  * Strips ANSI color escape codes to compute visible string length.
  */

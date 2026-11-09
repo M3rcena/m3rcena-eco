@@ -1,18 +1,12 @@
-const require_rolldown_runtime = require("./rolldown-runtime-CmQyd0Gu.cjs");
-const require_resolver = require("./resolver.cjs");
-let fs = require("fs");
-fs = require_rolldown_runtime.__toESM(fs);
-let path = require("path");
-path = require_rolldown_runtime.__toESM(path);
-let node_fs = require("node:fs");
-node_fs = require_rolldown_runtime.__toESM(node_fs);
-let node_path = require("node:path");
-node_path = require_rolldown_runtime.__toESM(node_path);
-let node_sqlite = require("node:sqlite");
-let _napi_rs_canvas = require("@napi-rs/canvas");
-let node_events = require("node:events");
-let node_http = require("node:http");
-node_http = require_rolldown_runtime.__toESM(node_http);
+import { getAllPackageResolutions, printResolutionSummary } from "./resolver.mjs";
+import fs from "fs";
+import path from "path";
+import fs$1 from "node:fs";
+import path$1 from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import { createCanvas, loadImage } from "@napi-rs/canvas";
+import { EventEmitter } from "node:events";
+import http from "node:http";
 // src/storage/EcoStorage.ts
 /**
 * @m3rcena/eco
@@ -86,7 +80,7 @@ var JsonEcoStorage = class {
 	cache = {};
 	loaded = false;
 	constructor(filePath = "./eco-data.json") {
-		this.filePath = path.default.resolve(process.cwd(), filePath);
+		this.filePath = path.resolve(process.cwd(), filePath);
 	}
 	makeKey(userId, guildId) {
 		return guildId ? `${guildId}_${userId}` : userId;
@@ -94,8 +88,8 @@ var JsonEcoStorage = class {
 	async ensureLoaded() {
 		if (this.loaded) return;
 		try {
-			if (fs.default.existsSync(this.filePath)) {
-				const raw = await fs.default.promises.readFile(this.filePath, "utf-8");
+			if (fs.existsSync(this.filePath)) {
+				const raw = await fs.promises.readFile(this.filePath, "utf-8");
 				this.cache = JSON.parse(raw);
 			}
 		} catch {
@@ -105,9 +99,9 @@ var JsonEcoStorage = class {
 	}
 	async persist() {
 		try {
-			const dir = path.default.dirname(this.filePath);
-			if (!fs.default.existsSync(dir)) await fs.default.promises.mkdir(dir, { recursive: true });
-			await fs.default.promises.writeFile(this.filePath, JSON.stringify(this.cache, null, 2), "utf-8");
+			const dir = path.dirname(this.filePath);
+			if (!fs.existsSync(dir)) await fs.promises.mkdir(dir, { recursive: true });
+			await fs.promises.writeFile(this.filePath, JSON.stringify(this.cache, null, 2), "utf-8");
 		} catch (err) {
 			console.error("[JsonEcoStorage] Failed to save accounts to disk:", err);
 		}
@@ -161,11 +155,11 @@ var SqliteEcoStorage = class {
 		const rawPath = typeof options === "string" ? options : options.path || "./eco.sqlite";
 		if (rawPath === ":memory:") this.dbPath = ":memory:";
 		else {
-			this.dbPath = node_path.default.resolve(process.cwd(), rawPath);
-			const dir = node_path.default.dirname(this.dbPath);
-			if (!node_fs.default.existsSync(dir)) node_fs.default.mkdirSync(dir, { recursive: true });
+			this.dbPath = path$1.resolve(process.cwd(), rawPath);
+			const dir = path$1.dirname(this.dbPath);
+			if (!fs$1.existsSync(dir)) fs$1.mkdirSync(dir, { recursive: true });
 		}
-		this.db = new node_sqlite.DatabaseSync(this.dbPath);
+		this.db = new DatabaseSync(this.dbPath);
 		if (typeof options === "object" ? options.walMode ?? true : true) try {
 			this.db.exec("PRAGMA journal_mode = WAL;");
 		} catch {}
@@ -286,12 +280,12 @@ model EcoAccount {
 */
 function applyPrismaEcoModel(schemaPath = "prisma/schema.prisma") {
 	try {
-		const resolved = node_path.default.resolve(process.cwd(), schemaPath);
-		if (!node_fs.default.existsSync(resolved)) return false;
-		const content = node_fs.default.readFileSync(resolved, "utf-8");
+		const resolved = path$1.resolve(process.cwd(), schemaPath);
+		if (!fs$1.existsSync(resolved)) return false;
+		const content = fs$1.readFileSync(resolved, "utf-8");
 		if (content.includes("model EcoAccount")) return false;
 		const updated = `${content.trim()}\n\n${PRISMA_ECO_MODEL}\n`;
-		node_fs.default.writeFileSync(resolved, updated, "utf-8");
+		fs$1.writeFileSync(resolved, updated, "utf-8");
 		return true;
 	} catch (err) {
 		console.error("[applyPrismaEcoModel] Failed to append model to schema:", err);
@@ -320,7 +314,6 @@ var PrismaEcoStorage = class {
 	async ensureMigrated() {
 		if (this.migrated || !this.autoMigrate || !this.client) return;
 		this.migrated = true;
-		if (this.client[this.modelName]) return;
 		if (typeof this.client.$executeRawUnsafe === "function") try {
 			await this.client.$executeRawUnsafe(`
           CREATE TABLE IF NOT EXISTS "${this.tableName}" (
@@ -429,17 +422,20 @@ var PrismaEcoStorage = class {
             "data" = EXCLUDED."data",
             "updatedAt" = NOW()
           `, account.userId, gid, account.wallet, account.bank, account.level, serialized);
+			return;
 		} catch {
-			await this.client.$executeRawUnsafe(`
-          INSERT INTO ${this.tableName} (userId, guildId, wallet, bank, level, data, updatedAt)
-          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-          ON CONFLICT(userId, guildId) DO UPDATE SET
-            wallet = excluded.wallet,
-            bank = excluded.bank,
-            level = excluded.level,
-            data = excluded.data,
-            updatedAt = CURRENT_TIMESTAMP
-          `, account.userId, gid, account.wallet, account.bank, account.level, serialized);
+			try {
+				await this.client.$executeRawUnsafe(`
+            INSERT INTO ${this.tableName} (userId, guildId, wallet, bank, level, data, updatedAt)
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(userId, guildId) DO UPDATE SET
+              wallet = excluded.wallet,
+              bank = excluded.bank,
+              level = excluded.level,
+              data = excluded.data,
+              updatedAt = CURRENT_TIMESTAMP
+            `, account.userId, gid, account.wallet, account.bank, account.level, serialized);
+			} catch {}
 		}
 	}
 	async getTopAccounts(sortBy = "netWorth", limit = 10, guildId) {
@@ -4123,7 +4119,7 @@ var RenderBankCard = class {
 	static async renderCard(options) {
 		const width = 850;
 		const height = 500;
-		const canvas = (0, _napi_rs_canvas.createCanvas)(width, height);
+		const canvas = createCanvas(width, height);
 		const ctx = canvas.getContext("2d");
 		const tier = options.cardTier || this.resolveTier(options.netWorth);
 		const symbol = options.currencySymbol || "🪙";
@@ -4227,7 +4223,7 @@ var RenderBankCard = class {
 		ctx.font = "800 24px sans-serif";
 		ctx.fillText(options.username.toUpperCase(), 50, 455);
 		if (options.avatarUrl) try {
-			const avatarImg = await (0, _napi_rs_canvas.loadImage)(options.avatarUrl);
+			const avatarImg = await loadImage(options.avatarUrl);
 			const avX = 740;
 			const avY = 390;
 			const avSize = 65;
@@ -4318,7 +4314,7 @@ var RenderMarketChart = class {
 	static renderChart(options) {
 		const width = 800;
 		const height = 400;
-		const canvas = (0, _napi_rs_canvas.createCanvas)(width, height);
+		const canvas = createCanvas(width, height);
 		const ctx = canvas.getContext("2d");
 		const isPositive = options.change24h >= 0;
 		const accentColor = isPositive ? "#10b981" : "#ef4444";
@@ -4408,7 +4404,7 @@ const yellow = (s) => `\x1b[33m${s}\x1b[39m`;
 const green = (s) => `\x1b[32m${s}\x1b[39m`;
 const red = (s) => `\x1b[31m${s}\x1b[39m`;
 const cyan = (s) => `\x1b[36m${s}\x1b[39m`;
-const ECO_VERSION = "14.28.1";
+const ECO_VERSION = "14.28.1-1";
 /**
 * Strips ANSI color escape codes to compute visible string length.
 */
@@ -4782,7 +4778,7 @@ var EcoBridgeRouter = class {
 * @copyright 2026 M3rcena Development. All rights reserved.
 * @license Apache-2.0
 */
-var EcoWekyConnector = class extends node_events.EventEmitter {
+var EcoWekyConnector = class extends EventEmitter {
 	eco;
 	weky;
 	options;
@@ -5089,7 +5085,7 @@ var EcoWekyConnector = class extends node_events.EventEmitter {
 * @copyright 2026 M3rcena Development. All rights reserved.
 * @license Apache-2.0
 */
-var EcoManager = class extends node_events.EventEmitter {
+var EcoManager = class extends EventEmitter {
 	storage;
 	bank;
 	rewards;
@@ -5767,18 +5763,18 @@ var EcoManager = class extends node_events.EventEmitter {
 async function hostEco(options = {}) {
 	const port = options.port ?? parseInt(process.env.PORT || process.env.ECO_PORT || "4002", 10);
 	const dbPath = options.dbPath ?? (process.env.ECO_DB_PATH || "./eco.sqlite");
-	require_resolver.printResolutionSummary();
+	printResolutionSummary();
 	const eco = new EcoManager({
 		storage: new SqliteEcoStorage({ path: dbPath }),
 		currencySymbol: "🪙",
 		currencyName: "Coins"
 	});
 	const router = new EcoBridgeRouter(eco);
-	const resolutions = require_resolver.getAllPackageResolutions();
+	const resolutions = getAllPackageResolutions();
 	if (resolutions["@m3rcena/bridge"].status !== "missing") try {
 		if ((await import(resolutions["@m3rcena/bridge"].path)).M3rcenaBridge) console.log(`[m3rcena-eco] 🌉 Found @m3rcena/bridge (${resolutions["@m3rcena/bridge"].status}). Ready for bridge mount.`);
 	} catch {}
-	const server = node_http.default.createServer(async (req, res) => {
+	const server = http.createServer(async (req, res) => {
 		const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
 		const pathname = url.pathname;
 		res.setHeader("Access-Control-Allow-Origin", "*");
@@ -5895,269 +5891,6 @@ if (process.argv[1]?.endsWith("host.ts") || process.argv[1]?.endsWith("host.js")
 	console.error("[m3rcena-eco host] Fatal error:", err);
 	process.exit(1);
 });
-Object.defineProperty(exports, "BankManager", {
-	enumerable: true,
-	get: function() {
-		return BankManager;
-	}
-});
-Object.defineProperty(exports, "BusinessManager", {
-	enumerable: true,
-	get: function() {
-		return BusinessManager;
-	}
-});
-Object.defineProperty(exports, "CRATE_PRICES", {
-	enumerable: true,
-	get: function() {
-		return CRATE_PRICES;
-	}
-});
-Object.defineProperty(exports, "CareerManager", {
-	enumerable: true,
-	get: function() {
-		return CareerManager;
-	}
-});
-Object.defineProperty(exports, "CasinoManager", {
-	enumerable: true,
-	get: function() {
-		return CasinoManager;
-	}
-});
-Object.defineProperty(exports, "CrateManager", {
-	enumerable: true,
-	get: function() {
-		return CrateManager;
-	}
-});
-Object.defineProperty(exports, "DEFAULT_BUSINESS_CATALOG", {
-	enumerable: true,
-	get: function() {
-		return DEFAULT_BUSINESS_CATALOG;
-	}
-});
-Object.defineProperty(exports, "DEFAULT_HEIST_TARGETS", {
-	enumerable: true,
-	get: function() {
-		return DEFAULT_HEIST_TARGETS;
-	}
-});
-Object.defineProperty(exports, "DEFAULT_JOBS", {
-	enumerable: true,
-	get: function() {
-		return DEFAULT_JOBS;
-	}
-});
-Object.defineProperty(exports, "DEFAULT_PETS", {
-	enumerable: true,
-	get: function() {
-		return DEFAULT_PETS;
-	}
-});
-Object.defineProperty(exports, "DEFAULT_SHOP_ITEMS", {
-	enumerable: true,
-	get: function() {
-		return DEFAULT_SHOP_ITEMS;
-	}
-});
-Object.defineProperty(exports, "DEFAULT_STOCKS", {
-	enumerable: true,
-	get: function() {
-		return DEFAULT_STOCKS;
-	}
-});
-Object.defineProperty(exports, "DEFAULT_VAULT_TIERS", {
-	enumerable: true,
-	get: function() {
-		return DEFAULT_VAULT_TIERS;
-	}
-});
-Object.defineProperty(exports, "ECO_VERSION", {
-	enumerable: true,
-	get: function() {
-		return ECO_VERSION;
-	}
-});
-Object.defineProperty(exports, "EcoBridgeRouter", {
-	enumerable: true,
-	get: function() {
-		return EcoBridgeRouter;
-	}
-});
-Object.defineProperty(exports, "EcoDatabaseHandler", {
-	enumerable: true,
-	get: function() {
-		return EcoDatabaseHandler;
-	}
-});
-Object.defineProperty(exports, "EcoManager", {
-	enumerable: true,
-	get: function() {
-		return EcoManager;
-	}
-});
-Object.defineProperty(exports, "EcoWekyConnector", {
-	enumerable: true,
-	get: function() {
-		return EcoWekyConnector;
-	}
-});
-Object.defineProperty(exports, "HeistManager", {
-	enumerable: true,
-	get: function() {
-		return HeistManager;
-	}
-});
-Object.defineProperty(exports, "JsonEcoStorage", {
-	enumerable: true,
-	get: function() {
-		return JsonEcoStorage;
-	}
-});
-Object.defineProperty(exports, "LOAN_CATALOG", {
-	enumerable: true,
-	get: function() {
-		return LOAN_CATALOG;
-	}
-});
-Object.defineProperty(exports, "LeaderboardManager", {
-	enumerable: true,
-	get: function() {
-		return LeaderboardManager;
-	}
-});
-Object.defineProperty(exports, "LoanManager", {
-	enumerable: true,
-	get: function() {
-		return LoanManager;
-	}
-});
-Object.defineProperty(exports, "MemoryEcoStorage", {
-	enumerable: true,
-	get: function() {
-		return MemoryEcoStorage;
-	}
-});
-Object.defineProperty(exports, "PRISMA_ECO_MODEL", {
-	enumerable: true,
-	get: function() {
-		return PRISMA_ECO_MODEL;
-	}
-});
-Object.defineProperty(exports, "PetManager", {
-	enumerable: true,
-	get: function() {
-		return PetManager;
-	}
-});
-Object.defineProperty(exports, "PrismaEcoStorage", {
-	enumerable: true,
-	get: function() {
-		return PrismaEcoStorage;
-	}
-});
-Object.defineProperty(exports, "RenderBankCard", {
-	enumerable: true,
-	get: function() {
-		return RenderBankCard;
-	}
-});
-Object.defineProperty(exports, "RenderMarketChart", {
-	enumerable: true,
-	get: function() {
-		return RenderMarketChart;
-	}
-});
-Object.defineProperty(exports, "RewardManager", {
-	enumerable: true,
-	get: function() {
-		return RewardManager;
-	}
-});
-Object.defineProperty(exports, "ShopManager", {
-	enumerable: true,
-	get: function() {
-		return ShopManager;
-	}
-});
-Object.defineProperty(exports, "SqliteEcoStorage", {
-	enumerable: true,
-	get: function() {
-		return SqliteEcoStorage;
-	}
-});
-Object.defineProperty(exports, "StockMarketManager", {
-	enumerable: true,
-	get: function() {
-		return StockMarketManager;
-	}
-});
-Object.defineProperty(exports, "TaxManager", {
-	enumerable: true,
-	get: function() {
-		return TaxManager;
-	}
-});
-Object.defineProperty(exports, "VaultManager", {
-	enumerable: true,
-	get: function() {
-		return VaultManager;
-	}
-});
-Object.defineProperty(exports, "applyPrismaEcoModel", {
-	enumerable: true,
-	get: function() {
-		return applyPrismaEcoModel;
-	}
-});
-Object.defineProperty(exports, "boxConsole", {
-	enumerable: true,
-	get: function() {
-		return boxConsole;
-	}
-});
-Object.defineProperty(exports, "checkPackageUpdates", {
-	enumerable: true,
-	get: function() {
-		return checkPackageUpdates;
-	}
-});
-Object.defineProperty(exports, "compareSemver", {
-	enumerable: true,
-	get: function() {
-		return compareSemver;
-	}
-});
-Object.defineProperty(exports, "createDefaultAccount", {
-	enumerable: true,
-	get: function() {
-		return createDefaultAccount;
-	}
-});
-Object.defineProperty(exports, "fetchLatestVersion", {
-	enumerable: true,
-	get: function() {
-		return fetchLatestVersion;
-	}
-});
-Object.defineProperty(exports, "hostEco", {
-	enumerable: true,
-	get: function() {
-		return hostEco;
-	}
-});
-Object.defineProperty(exports, "resolveEcoStorage", {
-	enumerable: true,
-	get: function() {
-		return resolveEcoStorage;
-	}
-});
-Object.defineProperty(exports, "stripAnsi", {
-	enumerable: true,
-	get: function() {
-		return stripAnsi;
-	}
-});
+export { DEFAULT_SHOP_ITEMS as A, applyPrismaEcoModel as B, HeistManager as C, CasinoManager as D, LeaderboardManager as E, BankManager as F, JsonEcoStorage as H, EcoDatabaseHandler as I, resolveEcoStorage as L, CareerManager as M, DEFAULT_JOBS as N, BusinessManager as O, RewardManager as P, PRISMA_ECO_MODEL as R, DEFAULT_HEIST_TARGETS as S, StockMarketManager as T, MemoryEcoStorage as U, SqliteEcoStorage as V, createDefaultAccount as W, VaultManager as _, ECO_VERSION as a, DEFAULT_PETS as b, compareSemver as c, RenderMarketChart as d, RenderBankCard as f, DEFAULT_VAULT_TIERS as g, LoanManager as h, EcoBridgeRouter as i, ShopManager as j, DEFAULT_BUSINESS_CATALOG as k, fetchLatestVersion as l, LOAN_CATALOG as m, EcoManager as n, boxConsole as o, TaxManager as p, EcoWekyConnector as r, checkPackageUpdates as s, hostEco as t, stripAnsi as u, CRATE_PRICES as v, DEFAULT_STOCKS as w, PetManager as x, CrateManager as y, PrismaEcoStorage as z };
 
-//# sourceMappingURL=host-Bmld-WtZ.cjs.map
+//# sourceMappingURL=host-WzbkBFzD.mjs.map
